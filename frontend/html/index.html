@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasFácil - Login</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-dollar-sign"></i>
+            </div>
+            <h1 class="brand-title">FinançasFácil</h1>
+            <p class="brand-subtitle">Organize suas finanças de forma simples e intuitiva</p>
+        </div>
+
+        <div class="auth-tabs" style="width: 100%; max-width: 440px;">
+            <div class="auth-tab active" onclick="toggleAuth('login')">Login</div>
+            <div class="auth-tab" onclick="toggleAuth('register')">Cadastro</div>
+        </div>
+
+        <div class="card auth-form-card">
+            <!-- Login Form -->
+            <form id="loginForm" class="form-toggle active" onsubmit="handleLogin(event)">
+                <h2 style="font-size: 1rem; margin-bottom: 0.25rem;">Bem-vindo de volta</h2>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">Entre com suas credenciais</p>
+                
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="loginEmail" class="input-control" placeholder="seu@email.com" required>
+                </div>
+                
+                <div class="input-group" style="margin-bottom: 0.5rem;">
+                    <label>Senha</label>
+                    <input type="password" id="loginPassword" class="input-control" placeholder="••••••••" required>
+                </div>
+                
+                <div style="text-align: right; margin-bottom: 1.5rem;">
+                    <a href="#" onclick="alert('Função em desenvolvimento. Em breve enviaremos um link de recuperação para o seu email!')" style="font-size: 0.75rem; color: var(--primary-green); text-decoration: none;">Esqueceu a senha?</a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="form-toggle" onsubmit="handleRegister(event)">
+                <h2 style="font-size: 1rem; margin-bottom: 0.25rem;">Criar conta</h2>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">Preencha os dados para começar</p>
+
+                <div class="input-group">
+                    <label>Nome completo</label>
+                    <input type="text" id="regName" class="input-control" placeholder="Seu nome" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="regEmail" class="input-control" placeholder="seu@email.com" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Telefone</label>
+                    <input type="tel" id="regPhone" class="input-control" placeholder="(11) 99999-9999" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Senha</label>
+                    <input type="password" id="regPassword" class="input-control" placeholder="••••••••" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <label>Confirmar senha</label>
+                    <input type="password" id="regConfPassword" class="input-control" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Criar conta</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/js/app.js"></script>
+    <script>
+        function toggleAuth(type) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.form-toggle').forEach(f => f.classList.remove('active'));
+            
+            if(type === 'login') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

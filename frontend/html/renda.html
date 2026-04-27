@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasFácil - Nova Renda</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+
+<body>
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div>
+                <h2 class="brand-title">FinançasFácil</h2>
+                <p class="brand-subtitle">Controle financeiro pessoal</p>
+            </div>
+        </div>
+        <div class="logout" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item"><i class="fa-solid fa-border-all"></i> Dashboard</a>
+                <a href="/renda" class="nav-item active"><i class="fa-solid fa-arrow-trend-up"></i> Cadastrar Renda</a>
+                <a href="/gasto" class="nav-item"><i class="fa-solid fa-arrow-trend-down"></i> Cadastrar Gasto</a>
+                <a href="/relatorios" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
+
+                <a href="/projetos" class="nav-item"><i class="fa-solid fa-rocket"></i> Projetos Futuros</a>
+                <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="envelope-card">
+                <div class="header" style="margin-bottom: 2rem;">
+                    <div class="header-title">
+                        <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Cadastrar Renda</h1>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Adicione suas fontes de renda</p>
+                    </div>
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; align-items: start; max-width: 100%;">
+                    <!-- COLUNA ESQUERDA: Formulário -->
+                    <div>
+                        <div class="form-card">
+                            <div class="form-header">
+                                <h2><i class="fa-solid fa-arrow-trend-up"></i> Nova Renda</h2>
+                                <p>Preencha os dados da sua renda</p>
+                            </div>
+
+                            <form id="transactionForm" onsubmit="submitTransaction(event, 'income')">
+                                <!-- ID Oculto para Edição -->
+                                <input type="hidden" id="transId" value="">
+
+                                <div class="input-group">
+                                    <label>Descrição</label>
+                                    <input type="text" id="transDesc" class="input-control"
+                                        placeholder="Ex: Salário, Freelance, Investimentos..." required>
+                                </div>
+
+                                <div class="input-group">
+                                    <label>Valor (R$)</label>
+                                    <input type="number" step="0.01" id="transAmnt" class="input-control"
+                                        placeholder="0,00" required>
+                                </div>
+
+                                <div
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                                    <div class="input-group" style="margin-bottom: 0;">
+                                        <label>Frequência</label>
+                                        <select id="transFreq" class="input-control">
+                                            <option value="Mensal">Mensal</option>
+                                            <option value="Única">Única</option>
+                                            <option value="Semanal">Semanal</option>
+                                            <option value="Anual">Anual</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group" style="margin-bottom: 0;">
+                                        <label>Dia de pagamento</label>
+                                        <input type="number" id="transDate" class="input-control"
+                                            placeholder="Dia: 1-31" min="1" max="31">
+                                    </div>
+                                </div>
+
+                                <button type="submit" id="transSubmitBtn" class="btn btn-primary">Cadastrar
+                                    Renda</button>
+                                <button type="button" id="transCancelBtn" class="btn"
+                                    style="display:none; margin-top:0.5rem; background:#e5e7eb; color:#374151;"
+                                    onclick="cancelEdit()">Cancelar Edição</button>
+                            </form>
+                        </div>
+
+                        <div class="tips-card" style="margin-top: 2rem;">
+                            <h4>Dicas</h4>
+                            <ul>
+                                <li>Cadastre todas as suas fontes de renda.</li>
+                                <li>Defina o dia do pagamento para os gráficos.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA: Tabela CRUD -->
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <h3
+                            style="margin-bottom: 1.5rem; color: var(--text-main); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            <i class="fa-solid fa-list-check"
+                                style="color: var(--primary-green); margin-right: 6px;"></i> Rendas Cadastradas
+                        </h3>
+                        <div id="transactionsList"
+                            style="display: flex; flex-direction: column; gap: 1rem; max-height: 600px; overflow-y: auto;">
+                            <div style="text-align:center; color: var(--text-muted); padding: 2rem;">Carregando
+                                rendas...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </main>
+    </div>
+    <script src="/js/app.js"></script>
+    <script>
+        checkAuth();
+    </script>
+</body>
+
+</html>

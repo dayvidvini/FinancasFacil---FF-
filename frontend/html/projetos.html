@@ -1,0 +1,111 @@
+<!-- --- INÍCIO DO ARQUIVO HTML: PROJETOS FUTUROS --- -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasFácil - Projetos Futuros</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body>
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div>
+                <h2 class="brand-title">FinançasFácil</h2>
+                <p class="brand-subtitle">Controle financeiro pessoal</p>
+            </div>
+        </div>
+        <div class="logout" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+        </div>
+    </header>
+
+    <div class="app-layout">
+        
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item"><i class="fa-solid fa-border-all"></i> Dashboard</a>
+                <a href="/renda" class="nav-item"><i class="fa-solid fa-arrow-trend-up"></i> Cadastrar Renda</a>
+                <a href="/gasto" class="nav-item"><i class="fa-solid fa-arrow-trend-down"></i> Cadastrar Gasto</a>
+                <a href="/relatorios" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
+
+                <a href="/projetos" class="nav-item active"><i class="fa-solid fa-rocket"></i> Projetos Futuros</a>
+                <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
+            </nav>
+        </aside>
+
+        <!-- Aba central -->
+        <main class="main-content">
+            <!-- ENVELOPE BRANCO GRANDE EXIGIDO NO PRINT -->
+            <div class="envelope-card">
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                    <div>
+                        <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Projetos Futuros</h1>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Planeje e acompanhe seus grandes objetivos</p>
+                    </div>
+                    <button class="btn" style="background-color: #3b82f6; color: white; width: auto; padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 6px;" onclick="toggleProjectForm()">
+                        <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Novo Projeto
+                    </button>
+                </div>
+
+                <!-- Formulário de Projeto (inicia oculto) -->
+                <div id="projectFormContainer" style="display: none; border: 1px solid #bfdbfe; background-color: #f8fafc; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="color: #3b82f6; margin-bottom: 4px;"><i class="fa-solid fa-rocket" style="margin-right:8px;"></i> Criar Novo Projeto</h3>
+                        <p style="font-size: 0.85rem; color: #64748b;">Defina um objetivo financeiro de longo prazo</p>
+                    </div>
+
+                    <form id="projectForm" onsubmit="submitProject(event)">
+                        <input type="hidden" id="projId" value="">
+                        
+                        <div class="input-group">
+                            <label>Nome do Projeto *</label>
+                            <input type="text" id="projTitle" class="input-control" placeholder="Ex: Comprar um carro, Viagem, etc." required>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label>Descrição</label>
+                            <input type="text" id="projSub" class="input-control" placeholder="Breve descrição do projeto">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label>Valor Necessário (R$) *</label>
+                                <input type="number" id="projTarget" class="input-control" step="0.01" placeholder="0,00" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Valor Atual (Guardado) (R$)</label>
+                                <input type="number" id="projCurrent" class="input-control" step="0.01" placeholder="0,00" value="0">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Data Alvo *</label>
+                            <input type="date" id="projDate" class="input-control" required>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                            <button type="submit" id="projSubmitBtn" class="btn" style="background-color: #3b82f6; color: white;">Criar Projeto</button>
+                            <button type="button" class="btn" style="background-color: #fff; color: #1e293b; border: 1px solid #cbd5e1; width: max-content; padding: 0 1.5rem;" onclick="cancelProjectEdit()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Lista Dinâmica de Projetos -->
+                <div class="form-container" id="projectsList" style="max-width: 100%;">
+                     <div style="text-align:center; color: var(--text-muted); padding: 2rem;">Carregando projetos...</div>
+                </div> <!-- FIM DA LISTA -->
+
+        </main>
+    </div>
+    
+    <script src="/js/app.js"></script>
+    <script>
+        checkAuth();
+    </script>
+</body>
+</html>
+<!-- --- TÉRMINO DO ARQUIVO --- -->
