@@ -8,7 +8,9 @@ import json
 import datetime
 import calendar
 
-def calculate_analytics(transactions):
+def calculate_analytics(transactions, budgets=None):
+    if budgets is None: budgets = {}
+    
     # Inicia os totais no zero
     total_income = 0.0
     total_expenses = 0.0
@@ -91,6 +93,19 @@ def calculate_analytics(transactions):
     media_economia = media_renda - media_gastos
     # --- TÉRMINO: CÁLCULOS EXTRAS ---
         
+    # --- INÍCIO: ORÇAMENTOS (BUDGETS) ---
+    budget_status = {}
+    for cat, limit in budgets.items():
+        spent = expenses_by_category.get(cat, 0.0)
+        percentage = (spent / limit * 100) if limit > 0 else 0
+        budget_status[cat] = {
+            'limit': limit,
+            'spent': spent,
+            'percentage': round(percentage, 1),
+            'remaining': round(limit - spent, 2)
+        }
+    # --- TÉRMINO: ORÇAMENTOS ---
+
     # --- INÍCIO: DEVOLUÇÃO DOS DADOS ---
     # Montamos um grande dicionário que será devolvido como formato JSON
     return {
@@ -107,7 +122,8 @@ def calculate_analytics(transactions):
         },
         'categories': expenses_by_category,
         'monthly': monthly_data,
-        'weekly': weekly_data # Adicionado para os graficos semanais roxos
+        'weekly': weekly_data, # Adicionado para os graficos semanais roxos
+        'budgets': budget_status
     }
     # --- TÉRMINO: DEVOLUÇÃO ---
 

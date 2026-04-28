@@ -6,6 +6,10 @@
     <title>FinançasFácil - Login</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
     <div class="auth-container">
@@ -94,6 +98,16 @@
                 document.getElementById('registerForm').classList.add('active');
             }
         }
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(reg => {
+            console.log('SW registered!', reg);
+          }).catch(err => console.log('SW registration failed', err));
+        });
+      }
     </script>
 </body>
 </html>

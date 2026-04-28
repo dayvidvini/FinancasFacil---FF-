@@ -4,13 +4,34 @@
 
 const API_URL = 'http://localhost:5000/api';
 
+// -> Wrapper de API para injetar o Token JWT
+async function apiFetch(url, options = {}) {
+    const token = localStorage.getItem('ff_token');
+    if (!options.headers) options.headers = {};
+    
+    // Se for FormData (upload de arquivo), não enviamos Content-Type pra o browser definir o boundary automático
+    if (!(options.body instanceof FormData) && !options.headers['Content-Type']) {
+        options.headers['Content-Type'] = 'application/json';
+    }
+    
+    if (token && !url.includes('/auth/')) {
+        options.headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch(url, options);
+    if (res.status === 401 && !url.includes('/auth/')) {
+        logout(); // Token expirado
+    }
+    return res;
+}
+
+
 // -> Aplicar configuração global (Tema) logo na inicialização baseando no LocalStorage
 function applyGlobalTheme() {
     const theme = localStorage.getItem('ff_user_theme');
     if(theme === 'Escuro') {
-        document.body.style.filter = "invert(0.9) hue-rotate(180deg)";
+        document.body.classList.add('dark-theme');
     } else {
-        document.body.style.filter = "none";
+        document.body.classList.remove('dark-theme');
     }
 }
 applyGlobalTheme();
@@ -32,6 +53,7 @@ function checkAuth() {
 // -> Função: Sair do sistema apagando as memórias
 function logout() {
     localStorage.removeItem('ff_user_id');
+    localStorage.removeItem('ff_token');
     localStorage.removeItem('ff_user_name');
     window.location.href = '/';
 }
@@ -43,15 +65,16 @@ async function handleLogin(e) {
     const password = document.getElementById('loginPassword').value;
     
     try {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await apiFetch(`${API_URL}/auth/login`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify({email, password})
         });
         const data = await res.json();
         if(res.ok) {
             // Salva credenciais e configurações na  memória local e vai pro Dashboard
             localStorage.setItem('ff_user_id', data.user_id);
+            localStorage.setItem('ff_token', data.token);
             localStorage.setItem('ff_user_name', data.name);
             if(data.email) localStorage.setItem('ff_user_email', data.email);
             if(data.theme) {
@@ -80,14 +103,14 @@ window.handleRegister = async function(event) {
     }
 
     try {
-        const res = await fetch(`${API_URL}/auth/register`, {
+        const res = await apiFetch(`${API_URL}/auth/register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            
             body: JSON.stringify({ name, email, phone, password })
         });
         const data = await res.json();
         if(res.ok) {
-            alert("Conta criada! Pode fazer login.");
+            alert(data.message || "Conta criada! Pode fazer login.");
             if(typeof toggleAuth === 'function') toggleAuth('login');
         } else alert(data.error);
     } catch(err) {
@@ -117,9 +140,9 @@ async function submitTransaction(e, type) {
         const url = transId ? `${API_URL}/transactions/${transId}` : `${API_URL}/transactions`;
         const method = transId ? 'PUT' : 'POST';
         
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method: method,
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify({user_id, type, description, amount, category, frequency, payment_day})
         });
         
@@ -145,10 +168,11 @@ async function loadTransactions(type) {
     const user_id = getCurrentUserId();
     
     try {
-        const res = await fetch(`${API_URL}/transactions/${user_id}?type=${type}`);
+        const res = await apiFetch(`${API_URL}/transactions/${user_id}?type=${type}`);
         const rows = await res.json();
         
         listEl.innerHTML = "";
+        if (!res.ok) throw new Error(rows.error || "Erro ao carregar");
         if(rows.length === 0) {
             listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem;">Nenhum registro encontrado.</div>`;
             return;
@@ -215,7 +239,7 @@ window.deleteTransaction = async function(id, type) {
     if(!confirm("Tem certeza que deseja excluir este registro permanentemente?")) return;
     
     try {
-        const res = await fetch(`${API_URL}/transactions/${id}`, { method: 'DELETE' });
+        const res = await apiFetch(`${API_URL}/transactions/${id}`, { method: 'DELETE' });
         if(res.ok) {
             loadTransactions(type);
         } else {
@@ -255,9 +279,9 @@ window.submitProject = async function(e) {
         const url = id ? `${API_URL}/projects/${id}` : `${API_URL}/projects`;
         const method = id ? 'PUT' : 'POST';
         
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method,
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify({user_id, title, subtitle, target_amount, current_amount, deadline_date})
         });
         
@@ -277,10 +301,11 @@ window.loadProjects = async function() {
     const user_id = getCurrentUserId();
     
     try {
-        const res = await fetch(`${API_URL}/projects/${user_id}`);
+        const res = await apiFetch(`${API_URL}/projects/${user_id}`);
         const rows = await res.json();
         
         listEl.innerHTML = "";
+        if (!res.ok) throw new Error(rows.error || "Erro ao carregar");
         if(rows.length === 0) {
             listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem;">Você ainda não cadastrou nenhum projeto.</div>`;
             return;
@@ -372,7 +397,7 @@ window.editProject = function(id, title, subtitle, target, current, date) {
 window.deleteProject = async function(id) {
     if(!confirm("Excluir projeto permanentemente?")) return;
     try {
-        const res = await fetch(`${API_URL}/projects/${id}`, { method: 'DELETE' });
+        const res = await apiFetch(`${API_URL}/projects/${id}`, { method: 'DELETE' });
         if(res.ok) loadProjects();
         else alert("Erro ao excluir.");
     } catch(er) { alert("Falha na rede.") }
@@ -381,9 +406,9 @@ window.deleteProject = async function(id) {
 window.quickAddProject = async function(id, current_amount, addval, title, subtitle, target_amount, deadline_date) {
     const finalAmount = parseFloat(current_amount) + addval;
     try {
-        const res = await fetch(`${API_URL}/projects/${id}`, {
+        const res = await apiFetch(`${API_URL}/projects/${id}`, {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify({title, subtitle: subtitle==='null'?'':subtitle, target_amount, current_amount: finalAmount, deadline_date})
         });
         if(res.ok) loadProjects();
@@ -397,7 +422,7 @@ window.quickAddProject = async function(id, current_amount, addval, title, subti
 window.loadSettings = async function() {
     const user_id = getCurrentUserId();
     try {
-        const res = await fetch(`${API_URL}/users/${user_id}`);
+        const res = await apiFetch(`${API_URL}/users/${user_id}`);
         const user = await res.json();
         
         if(res.ok) {
@@ -434,9 +459,9 @@ window.updateProfileData = async function() {
     const language = document.getElementById('confLanguage').value;
     
     try {
-        const res = await fetch(`${API_URL}/users/${user_id}/profile`, {
+        const res = await apiFetch(`${API_URL}/users/${user_id}/profile`, {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify({name, currency, language})
         });
         if(res.ok) {
@@ -459,9 +484,9 @@ window.updatePasswordData = async function() {
     if(new_password !== confirm_pass) return alert("A nova senha e a confirmação não conferem.");
     
     try {
-        const res = await fetch(`${API_URL}/users/${user_id}/security`, {
+        const res = await apiFetch(`${API_URL}/users/${user_id}/security`, {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify({current_password, new_password})
         });
         if(res.ok) {
@@ -482,9 +507,9 @@ window.updateSettingToggle = async function(field, isChecked) {
     bodyObj[field] = isChecked;
     
     try {
-        await fetch(`${API_URL}/users/${user_id}/settings`, {
+        await apiFetch(`${API_URL}/users/${user_id}/settings`, {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify(bodyObj)
         });
     } catch(er) {}
@@ -503,9 +528,9 @@ window.updateThemeConfig = async function(themeString) {
     applyGlobalTheme();
     
     try {
-        await fetch(`${API_URL}/users/${user_id}/settings`, {
+        await apiFetch(`${API_URL}/users/${user_id}/settings`, {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
+            
             body: JSON.stringify({theme: themeString})
         });
     } catch(er) {}
@@ -523,7 +548,7 @@ window.deleteUserAccount = async function() {
     if(confirm("ÚLTIMO AVISO! Tem 100% de certeza disso?")) {
         const user_id = getCurrentUserId();
         try {
-            const res = await fetch(`${API_URL}/users/${user_id}`, { method: 'DELETE' });
+            const res = await apiFetch(`${API_URL}/users/${user_id}`, { method: 'DELETE' });
             if(res.ok) {
                 alert("Sua conta e dados foram excluídos permanentemente. Adeus...");
                 logout(); // Usa função já existente
@@ -542,7 +567,7 @@ async function loadDashboard() {
     if(!user_id) return;
     
     try {
-        const res = await fetch(`${API_URL}/dashboard/${user_id}`);
+        const res = await apiFetch(`${API_URL}/dashboard/${user_id}`);
         const data = await res.json();
         
         if(res.ok) {
@@ -570,7 +595,7 @@ async function loadReports() {
     if(!user_id) return;
     
     try {
-        const res = await fetch(`${API_URL}/dashboard/${user_id}`);
+        const res = await apiFetch(`${API_URL}/dashboard/${user_id}`);
         const data = await res.json();
         
         if(res.ok) {
@@ -834,3 +859,78 @@ function renderCalendar(transactions) {
     grid.innerHTML = html;
 }
 /* --- TÉRMINO DO ARQUIVO --- */
+
+// =====================================
+// SESSÃO DE IMPORTAÇÃO (OFX/CSV)
+// =====================================
+window.importTransactions = async function(event) {
+    event.preventDefault();
+    const user_id = getCurrentUserId();
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput.files.length) return alert('Selecione um arquivo.');
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+        const res = await apiFetch(`${API_URL}/import/${user_id}`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if(res.ok) {
+            alert(data.message);
+            fileInput.value = '';
+            if(typeof loadDashboard === 'function') loadDashboard();
+        } else alert(data.error);
+    } catch(err) {
+        alert('Erro ao importar arquivo.');
+    }
+}
+
+// =====================================
+// SESSÃO DE ORÇAMENTOS (BUDGETS)
+// =====================================
+window.saveBudget = async function(event) {
+    event.preventDefault();
+    const user_id = getCurrentUserId();
+    const category = document.getElementById('budgetCategory').value;
+    const limit_amount = parseFloat(document.getElementById('budgetLimit').value);
+    
+    try {
+        const res = await apiFetch(`${API_URL}/budgets`, {
+            method: 'POST',
+            body: JSON.stringify({ category, limit_amount })
+        });
+        if(res.ok) {
+            alert('Orçamento definido com sucesso!');
+            document.getElementById('budgetForm').reset();
+            loadDashboard(); // Recarrega para mostrar graficos atualizados
+        } else {
+            const err = await res.json();
+            alert(err.error);
+        }
+    } catch(err) {
+        alert('Erro ao salvar orçamento.');
+    }
+}
+
+// =====================================
+// SESSÃO DE RECUPERAÇÃO DE SENHA
+// =====================================
+window.handleForgotPassword = async function(event) {
+    event.preventDefault();
+    const email = prompt('Digite o e-mail da sua conta para recuperar a senha:');
+    if(!email) return;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/auth/forgot-password`, {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        alert(data.message || 'Se o e-mail existir, você receberá um link de recuperação.');
+    } catch(err) {
+        alert('Erro de conexão ao solicitar recuperação.');
+    }
+}

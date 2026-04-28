@@ -1,13 +1,19 @@
 <!-- --- INÍCIO DO ARQUIVO HTML: CONFIGURAÇÕES DE PERFIL E SISTEMA --- -->
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinançasFácil - Configurações</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
 </head>
+
 <body>
     <header class="top-nav">
         <div class="brand">
@@ -38,160 +44,177 @@
         <main class="main-content">
             <!-- ENVELOPE BRANCO GRANDE -->
             <div class="envelope-card">
-                
+
                 <div style="margin-bottom: 2rem;">
                     <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Configurações</h1>
                     <p style="color: var(--text-muted); font-size: 0.9rem;">Gerencie suas preferências e dados</p>
                 </div>
 
                 <div class="form-container" style="max-width: 100%;">
-                
-                <!-- Bloco 1: SEU PERFIL -->
-                <div class="form-card" style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
-                    <div class="form-header">
-                        <h2><i class="fa-regular fa-user" style="color:#3b82f6;"></i> Perfil do Usuário</h2>
-                        <p>Atualize suas informações pessoais</p>
-                    </div>
 
-                    <div class="input-group">
-                        <label>Nome completo</label>
-                        <input type="text" id="confName" class="input-control" placeholder="João Silva">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>E-mail</label>
-                        <input type="email" id="confEmail" class="input-control" placeholder="Carregando..." readonly>
-                    </div>
+                    <!-- Bloco 1: SEU PERFIL -->
+                    <div class="form-card"
+                        style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
+                        <div class="form-header">
+                            <h2><i class="fa-regular fa-user" style="color:#3b82f6;"></i> Perfil do Usuário</h2>
+                            <p>Atualize suas informações pessoais</p>
+                        </div>
 
-                    <div class="charts-grid-alt" style="margin-bottom:0">
                         <div class="input-group">
-                            <label>Moeda</label>
-                            <select class="input-control" id="confCurrency"><option>Real (BRL)</option><option>Dólar (USD)</option><option>Euro (EUR)</option></select>
+                            <label>Nome completo</label>
+                            <input type="text" id="confName" class="input-control" placeholder="João Silva">
+                        </div>
+
+                        <div class="input-group">
+                            <label>E-mail</label>
+                            <input type="email" id="confEmail" class="input-control" placeholder="Carregando..."
+                                readonly>
+                        </div>
+                        <button class="btn"
+                            style="background-color: #3b82f6; color: white; width: auto; border: none; padding: 0.6rem 1.2rem;"
+                            onclick="updateProfileData()">Salvar Alterações</button>
+                    </div>
+
+                    <!-- Bloco 2: SEGURANÇA -->
+                    <div class="form-card"
+                        style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
+                        <div class="form-header">
+                            <h2><i class="fa-solid fa-shield" style="color:var(--danger-red)"></i> Segurança</h2>
+                            <p>Altere sua senha e configurações de segurança</p>
                         </div>
                         <div class="input-group">
-                            <label>Idioma</label>
-                            <select class="input-control" id="confLanguage"><option>Português (BR)</option><option>English (US)</option><option>Español</option></select>
+                            <label>Senha atual</label>
+                            <input type="password" id="confCurrentPass" class="input-control" placeholder="••••••••">
                         </div>
-                    </div>
-                    <button class="btn" style="background-color: #3b82f6; color: white; width: auto; border: none; padding: 0.6rem 1.2rem;" onclick="updateProfileData()">Salvar Alterações</button>
-                </div>
-
-                <!-- Bloco 2: SEGURANÇA -->
-                <div class="form-card" style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
-                    <div class="form-header">
-                        <h2><i class="fa-solid fa-shield" style="color:var(--danger-red)"></i> Segurança</h2>
-                        <p>Altere sua senha e configurações de segurança</p>
-                    </div>
-                    <div class="input-group">
-                        <label>Senha atual</label>
-                        <input type="password" id="confCurrentPass" class="input-control" placeholder="••••••••">
-                    </div>
-                    <div class="input-group">
-                        <label>Nova senha</label>
-                        <input type="password" id="confNewPass" class="input-control" placeholder="••••••••">
-                    </div>
-                    <div class="input-group" style="margin-bottom: 1.5rem;">
-                        <label>Confirmar nova senha</label>
-                        <input type="password" id="confConfirmPass" class="input-control" placeholder="••••••••">
-                    </div>
-                    <button class="btn" style="width: auto; background: transparent; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 500;" onclick="updatePasswordData()">Alterar Senha</button>
-                </div>
-
-                <!-- Bloco 3: NOTIFICAÇÕES (Toggles) -->
-                <div class="form-card" style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
-                    <div class="form-header">
-                        <h2><i class="fa-regular fa-bell" style="color:#f97316"></i> Notificações</h2>
-                        <p>Gerencie como você recebe atualizações</p>
+                        <div class="input-group">
+                            <label>Nova senha</label>
+                            <input type="password" id="confNewPass" class="input-control" placeholder="••••••••">
+                        </div>
+                        <div class="input-group" style="margin-bottom: 1.5rem;">
+                            <label>Confirmar nova senha</label>
+                            <input type="password" id="confConfirmPass" class="input-control" placeholder="••••••••">
+                        </div>
+                        <button class="btn"
+                            style="width: auto; background: transparent; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 500;"
+                            onclick="updatePasswordData()">Alterar Senha</button>
                     </div>
 
-                    <div class="switch-group">
-                        <div class="switch-info">
-                            <strong>Notificações push</strong>
-                            <small>Receba notificações no navegador</small>
+                    <!-- Bloco 3: NOTIFICAÇÕES (Toggles) -->
+                    <div class="form-card"
+                        style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
+                        <div class="form-header">
+                            <h2><i class="fa-regular fa-bell" style="color:#f97316"></i> Notificações</h2>
+                            <p>Gerencie como você recebe atualizações</p>
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="confPush" onchange="updateSettingToggle('push_enabled', this.checked)">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="switch-group">
-                        <div class="switch-info">
-                            <strong>Alertas por e-mail</strong>
-                            <small>Receba alertas importantes por e-mail</small>
+
+                        <div class="switch-group">
+                            <div class="switch-info">
+                                <strong>Notificações push</strong>
+                                <small>Receba notificações no navegador</small>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="confPush"
+                                    onchange="updateSettingToggle('push_enabled', this.checked)">
+                                <span class="slider"></span>
+                            </label>
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="confEmailAlert" onchange="updateSettingToggle('email_alerts', this.checked)">
-                            <span class="slider"></span>
-                        </label>
+
+                        <div class="switch-group">
+                            <div class="switch-info">
+                                <strong>Alertas por e-mail</strong>
+                                <small>Receba alertas importantes por e-mail</small>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="confEmailAlert"
+                                    onchange="updateSettingToggle('email_alerts', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-group">
+                            <div class="switch-info">
+                                <strong>Relatório mensal</strong>
+                                <small>Resumo financeiro enviado todo mês</small>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="confMonthly"
+                                    onchange="updateSettingToggle('monthly_report', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="switch-group">
-                        <div class="switch-info">
-                            <strong>Relatório mensal</strong>
-                            <small>Resumo financeiro enviado todo mês</small>
+                    <!-- Bloco 4: APARÊNCIA (Temas) -->
+                    <div class="form-card"
+                        style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
+                        <div class="form-header">
+                            <h2><i class="fa-solid fa-palette" style="color:var(--accent-purple)"></i> Aparência</h2>
+                            <p>Personalize a aparência do aplicativo</p>
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="confMonthly" onchange="updateSettingToggle('monthly_report', this.checked)">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
 
-                <!-- Bloco 4: APARÊNCIA (Temas) -->
-                <div class="form-card" style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
-                    <div class="form-header">
-                        <h2><i class="fa-solid fa-palette" style="color:var(--accent-purple)"></i> Aparência</h2>
-                        <p>Personalize a aparência do aplicativo</p>
-                    </div>
-                    
-                    <div class="theme-selector" id="themeConfBox">
-                        <div class="theme-box" id="theme-Claro" onclick="updateThemeConfig('Claro')">
-                            <div class="theme-img"></div>
-                            <span>Claro</span>
+                        <div class="theme-selector" id="themeConfBox">
+                            <div class="theme-box" id="theme-Claro" onclick="updateThemeConfig('Claro')">
+                                <div class="theme-img"></div>
+                                <span>Claro</span>
+                            </div>
+                            <div class="theme-box escuro" id="theme-Escuro" onclick="updateThemeConfig('Escuro')">
+                                <div class="theme-img" style="background:#1f2937"></div>
+                                <span>Escuro</span>
+                            </div>
                         </div>
-                        <div class="theme-box escuro" id="theme-Escuro" onclick="updateThemeConfig('Escuro')">
-                            <div class="theme-img" style="background:#1f2937"></div>
-                            <span>Escuro</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bloco 5: GESTÃO DE DADOS (Exportar CSV e Excluir) -->
-                <div class="form-card" style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
-                    <div class="form-header">
-                        <h2><i class="fa-solid fa-server" style="color:var(--primary-green)"></i> Dados</h2>
-                        <p>Gerencie seus dados financeiros</p>
                     </div>
 
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e7eb; padding-bottom:1.5rem; margin-bottom:1.5rem;">
-                        <div class="switch-info">
-                            <strong>Exportar dados</strong>
-                            <small>Baixe todos os seus dados em formato CSV</small>
+                    <!-- Bloco 5: GESTÃO DE DADOS (Exportar CSV e Excluir) -->
+                    <div class="form-card"
+                        style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
+                        <div class="form-header">
+                            <h2><i class="fa-solid fa-server" style="color:var(--primary-green)"></i> Dados</h2>
+                            <p>Gerencie seus dados financeiros</p>
                         </div>
-                        <button class="btn" style="width: auto; border: 1px solid #e5e7eb; background:transparent; font-weight:500;" onclick="exportFinancialData()">Exportar</button>
-                    </div>
-                    
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div class="switch-info">
-                            <strong style="color:var(--danger-red)">Excluir conta</strong>
-                            <small>Remova permanentemente sua conta e dados</small>
+
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e7eb; padding-bottom:1.5rem; margin-bottom:1.5rem;">
+                            <div class="switch-info">
+                                <strong>Exportar dados</strong>
+                                <small>Baixe todos os seus dados em formato CSV</small>
+                            </div>
+                            <button class="btn"
+                                style="width: auto; border: 1px solid #e5e7eb; background:transparent; font-weight:500;"
+                                onclick="exportFinancialData()">Exportar</button>
                         </div>
-                        <button class="btn btn-danger" style="width: auto; padding: 0.6rem 1.2rem; font-weight:500;" onclick="deleteUserAccount()">Excluir</button>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="switch-info">
+                                <strong style="color:var(--danger-red)">Excluir conta</strong>
+                                <small>Remova permanentemente sua conta e dados</small>
+                            </div>
+                            <button class="btn btn-danger" style="width: auto; padding: 0.6rem 1.2rem; font-weight:500;"
+                                onclick="deleteUserAccount()">Excluir</button>
+                        </div>
                     </div>
-                </div>
 
                 </div> <!-- Fim form container -->
             </div> <!-- Fim envelope grande -->
         </main>
     </div>
-    
+
     <script src="/js/app.js"></script>
     <script>
         checkAuth();
         document.getElementById('confName').value = localStorage.getItem('ff_user_name') || '';
         document.getElementById('confEmail').value = localStorage.getItem('ff_user_email') || '';
     </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('SW registered!', reg);
+                }).catch(err => console.log('SW registration failed', err));
+            });
+        }
+    </script>
 </body>
+
 </html>
 <!-- --- TÉRMINO DO ARQUIVO --- -->

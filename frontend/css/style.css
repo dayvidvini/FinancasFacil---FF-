@@ -23,6 +23,17 @@
     --accent-purple: #8b5cf6; /* Roxo para as sugestões e projetos */
 }
 
+/* Tema Escuro Dinâmico */
+body.dark-theme {
+    --bg-color: #121826;
+    --card-bg: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    /* Reduz a força da sombra dos cartões no dark mode */
+    box-shadow: none;
+}
+
 /* ==========================================
    REGRAS BÁSICAS PARA TODA A PÁGINA
 ========================================== */
