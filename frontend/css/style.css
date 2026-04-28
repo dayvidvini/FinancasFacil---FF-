@@ -274,6 +274,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .theme-selector { display: flex; gap: 1rem; margin-top: 1rem;}
 .theme-box { flex: 1; text-align: center; border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: 0.2s; padding: 8px;}
 .theme-box.active { border-color: var(--accent-blue); background: #eff6ff;}
+body.dark-theme .theme-box.active { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
 .theme-img { height: 50px; background: #e5e7eb; border-radius: 6px; margin-bottom: 8px;}
 .theme-box.escuro .theme-img { background: #1f2937; }
 .theme-box.auto .theme-img { background: linear-gradient(to right, #e5e7eb 50%, #1f2937 50%); }
@@ -372,6 +373,11 @@ input:checked + .slider:before { transform: translateX(20px); }
     border: 1px solid var(--primary-green);
     font-weight: 700;
     background: #eefdf7;
+}
+
+body.dark-theme .cal-day.today {
+    background: rgba(0, 202, 128, 0.15);
+    color: var(--primary-green);
 }
 .cal-indicator-wrapper {
     position: absolute;
