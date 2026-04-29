@@ -144,6 +144,44 @@ async function submitTransaction(e, type) {
         category = 'Renda';
     }
     
+    if (frequency === 'Quinzenal' && !transId) {
+        const quinzenalType = document.getElementById('transQuinzenalType').value;
+        const day1 = parseInt(payment_day);
+        if (!day1) return alert('Por favor, informe o Dia da 1ª parcela.');
+        
+        let day2 = day1 + 15;
+        if (quinzenalType === 'ultimoDia') {
+            day2 = 31;
+        } else if (day2 > 30) {
+            day2 = day2 - 30;
+        }
+        
+        try {
+            // Parte 1
+            const res1 = await apiFetch(url, {
+                method: method,
+                body: JSON.stringify({user_id, type, description: description + ' - 1ª Parte', amount: amount / 2, category, frequency: 'Mensal', payment_day: day1})
+            });
+            // Parte 2
+            const res2 = await apiFetch(url, {
+                method: method,
+                body: JSON.stringify({user_id, type, description: description + ' - 2ª Parte', amount: amount / 2, category, frequency: 'Mensal', payment_day: day2})
+            });
+            
+            if (res1.ok && res2.ok) {
+                alert("Transação quinzenal cadastrada em duas partes!");
+                if(e) e.target.reset();
+                cancelEdit();
+                loadTransactions(type);
+            } else {
+                alert("Erro ao salvar uma das partes da transação.");
+            }
+        } catch(err) {
+            alert("Erro na rede ao cadastrar quinzenal.");
+        }
+        return;
+    }
+    
     try {
         const url = transId ? `${API_URL}/transactions/${transId}` : `${API_URL}/transactions`;
         const method = transId ? 'PUT' : 'POST';
@@ -207,6 +245,20 @@ async function loadTransactions(type) {
         });
     } catch(err) {
         listEl.innerHTML = `<div style="text-align:center; color: red;">Erro ao carregar lista.</div>`;
+    }
+}
+
+window.handleFreqChange = function() {
+    const freq = document.getElementById('transFreq').value;
+    const quinzenalOpts = document.getElementById('quinzenalOptions');
+    const lblDate = document.getElementById('lblTransDate');
+    
+    if (freq === 'Quinzenal') {
+        if(quinzenalOpts) quinzenalOpts.style.display = 'block';
+        if(lblDate) lblDate.innerText = 'Dia da 1ª parcela';
+    } else {
+        if(quinzenalOpts) quinzenalOpts.style.display = 'none';
+        if(lblDate) lblDate.innerText = 'Dia de pagamento';
     }
 }
 
@@ -580,20 +632,63 @@ async function loadDashboard() {
         
         if(res.ok) {
             const summary = data.analytics.summary;
-            document.getElementById('stat-income').innerText = `R$ ${summary.total_income.toFixed(2).replace('.', ',')}`;
-            document.getElementById('stat-expense').innerText = `R$ ${summary.total_expenses.toFixed(2).replace('.', ',')}`;
-            document.getElementById('stat-balance').innerText = `R$ ${summary.balance.toFixed(2).replace('.', ',')}`;
-            document.getElementById('stat-suggestion').innerText = `R$ ${summary.daily_suggestion.toFixed(2).replace('.', ',')}`;
+            if(document.getElementById('stat-income')) document.getElementById('stat-income').innerText = `R$ ${summary.total_income.toFixed(2).replace('.', ',')}`;
+            if(document.getElementById('stat-expense')) document.getElementById('stat-expense').innerText = `R$ ${summary.total_expenses.toFixed(2).replace('.', ',')}`;
+            if(document.getElementById('stat-balance')) document.getElementById('stat-balance').innerText = `R$ ${summary.balance.toFixed(2).replace('.', ',')}`;
+            if(document.getElementById('stat-suggestion')) document.getElementById('stat-suggestion').innerText = `R$ ${summary.daily_suggestion.toFixed(2).replace('.', ',')}`;
             
             // Chama a renderização dos charts mandando os dados calculados
             renderCharts(data.analytics); 
             if(document.getElementById('calendarGrid')) {
                 renderCalendar(data.transactions);
             }
+            if(document.getElementById('budgetsList')) {
+                renderBudgets(data.analytics.budgets);
+            }
         }
     } catch(err) {
         console.error("Erro ao carregar dashboard", err);
     }
+}
+
+// -> Função Auxiliar: Renderizar lista de Orçamentos/Budgets
+function renderBudgets(budgets) {
+    const listEl = document.getElementById('budgetsList');
+    if (!listEl) return;
+    
+    if (!budgets || Object.keys(budgets).length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem;">Nenhum orçamento definido ainda.</div>`;
+        return;
+    }
+    
+    let html = '';
+    for (let cat in budgets) {
+        const b = budgets[cat];
+        let color = 'var(--primary-green)'; // default green
+        if (b.percentage > 90) {
+            color = '#f43f5e'; // red
+        } else if (b.percentage > 70) {
+            color = '#eab308'; // yellow
+        }
+        
+        let percView = b.percentage > 100 ? 100 : b.percentage;
+        
+        html += `
+        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-weight: 600; font-size: 1.1rem; color: var(--text-main);">${cat}</span>
+                <span style="color: var(--text-muted); font-size: 0.9rem;">R$ ${b.spent.toFixed(2)} / R$ ${b.limit.toFixed(2)}</span>
+            </div>
+            <div style="background: #f3f4f6; width: 100%; height: 10px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+                <div style="background: ${color}; height: 100%; width: ${percView}%; border-radius: 6px; transition: width 0.5s ease;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                <strong style="color: ${color};">${b.percentage}% utilizado</strong>
+                <span style="color: var(--text-muted);">Restam: R$ ${b.remaining.toFixed(2)}</span>
+            </div>
+        </div>`;
+    }
+    listEl.innerHTML = html;
 }
 
 // -> Função: Puxar e montar a tela Inteira avançada de Relatórios
@@ -700,6 +795,10 @@ async function loadReports() {
                       </div>`;
                  }
                  document.getElementById('detailsList').innerHTML = listHTML;
+            }
+            
+            if(document.getElementById('budgetsList') && analytics.budgets) {
+                renderBudgets(analytics.budgets);
             }
             
         }
@@ -938,7 +1037,103 @@ window.handleForgotPassword = async function(event) {
         });
         const data = await res.json();
         alert(data.message || 'Se o e-mail existir, você receberá um link de recuperação.');
-    } catch(err) {
+} catch(err) {
         alert('Erro de conexão ao solicitar recuperação.');
+    }
+}
+
+// =====================================
+// SESSÃO DO ASSISTENTE DE SALÁRIO
+// =====================================
+window.openSalaryWizard = function() {
+    document.getElementById('salaryWizardModal').style.display = 'flex';
+    document.getElementById('salaryWizardForm').reset();
+    updateWizardFields();
+}
+
+window.closeSalaryWizard = function() {
+    document.getElementById('salaryWizardModal').style.display = 'none';
+}
+
+window.updateWizardFields = function() {
+    const type = document.getElementById('wizSalaryType').value;
+    const day1Container = document.getElementById('wizDay1Container');
+    const day2Container = document.getElementById('wizDay2Container');
+    const labelDay1 = document.getElementById('wizDay1Label');
+    
+    if (type === 'Fixo') {
+        day1Container.style.display = 'block';
+        labelDay1.innerText = 'Dia do Pagamento';
+        day2Container.style.display = 'none';
+    } else if (type === 'Quinzenal') {
+        day1Container.style.display = 'block';
+        labelDay1.innerText = 'Dia da 1ª Parte (A 2ª será calculada +15 dias)';
+        day2Container.style.display = 'none';
+    } else if (type === 'DuasDatas') {
+        day1Container.style.display = 'block';
+        labelDay1.innerText = 'Dia da 1ª Parte';
+        day2Container.style.display = 'block';
+        toggleWizDay2Input();
+    }
+}
+
+window.toggleWizDay2Input = function() {
+    const isLastDay = document.getElementById('wizIsLastDay').checked;
+    const day2InputGroup = document.getElementById('wizDay2InputGroup');
+    const day2Input = document.getElementById('wizDay2');
+    
+    if (isLastDay) {
+        day2InputGroup.style.display = 'none';
+        day2Input.removeAttribute('required');
+    } else {
+        day2InputGroup.style.display = 'block';
+        day2Input.setAttribute('required', 'true');
+    }
+}
+
+window.submitSalaryWizard = async function(e) {
+    e.preventDefault();
+    const user_id = getCurrentUserId();
+    const amount = parseFloat(document.getElementById('wizSalaryAmnt').value);
+    const type = document.getElementById('wizSalaryType').value;
+    const day1 = parseInt(document.getElementById('wizDay1').value);
+    
+    let parts = [];
+    
+    if (type === 'Fixo') {
+        parts.push({ day: day1, amount: amount, desc: 'Salário' });
+    } else if (type === 'Quinzenal') {
+        let day2 = day1 + 15;
+        if (day2 > 30) day2 = day2 - 30; // Aproximação segura
+        parts.push({ day: day1, amount: amount / 2, desc: 'Salário - 1ª Quinzena' });
+        parts.push({ day: day2, amount: amount / 2, desc: 'Salário - 2ª Quinzena' });
+    } else if (type === 'DuasDatas') {
+        const isLastDay = document.getElementById('wizIsLastDay').checked;
+        const day2 = isLastDay ? 31 : parseInt(document.getElementById('wizDay2').value);
+        parts.push({ day: day1, amount: amount / 2, desc: 'Salário - Adiantamento' });
+        parts.push({ day: day2, amount: amount / 2, desc: 'Salário - Pagamento Final' });
+    }
+    
+    try {
+        for (let p of parts) {
+            await apiFetch(`${API_URL}/transactions`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: user_id,
+                    type: 'income',
+                    description: p.desc,
+                    amount: p.amount,
+                    category: 'Renda',
+                    frequency: 'Mensal',
+                    payment_day: p.day
+                })
+            });
+        }
+        
+        alert('Salário configurado com sucesso!');
+        closeSalaryWizard();
+        if (typeof loadTransactions === 'function') loadTransactions('income');
+    } catch (err) {
+        alert('Erro ao configurar salário automático.');
     }
 }

@@ -1,0 +1,104 @@
+<!-- --- INÍCIO DO ARQUIVO HTML: PROJETOS FUTUROS --- -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasFácil - Projetos Futuros</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div>
+                <h2 class="brand-title">FinançasFácil</h2>
+                <p class="brand-subtitle">Controle financeiro pessoal</p>
+            </div>
+        </div>
+        <div class="logout" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+        </div>
+    </header>
+
+    <div class="app-layout">
+        
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item"><i class="fa-solid fa-border-all"></i> Dashboard</a>
+                <a href="/renda" class="nav-item"><i class="fa-solid fa-arrow-trend-up"></i> Cadastrar Renda</a>
+                <a href="/gasto" class="nav-item"><i class="fa-solid fa-arrow-trend-down"></i> Cadastrar Gasto</a>
+                <a href="/relatorios" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
+                <a href="/orcamentos" class="nav-item active"><i class="fa-solid fa-bullseye"></i> Orçamentos</a>
+
+                <a href="/projetos" class="nav-item"><i class="fa-solid fa-rocket"></i> Projetos Futuros</a>
+                <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
+            </nav>
+        </aside>
+
+        <!-- Aba central -->
+        <main class="main-content">
+            <!-- ENVELOPE BRANCO GRANDE EXIGIDO NO PRINT -->
+            <div class="envelope-card">
+                
+                <div style="margin-bottom: 2rem;">
+                    <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Orçamentos e Metas</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Controle o limite de gastos mensais por categoria</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+                    <!-- Formulário de Orçamento -->
+                    <div style="background: var(--bg-main); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <h4 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Definir Limite</h4>
+                        <form id="budgetForm" onsubmit="saveBudget(event)">
+                            <div class="input-group">
+                                <label>Categoria</label>
+                                <select id="budgetCategory" class="input-control" required>
+                                    <option value="Moradia">Moradia</option>
+                                    <option value="Alimentação">Alimentação</option>
+                                    <option value="Transporte">Transporte</option>
+                                    <option value="Contas">Contas (Água, Luz, etc)</option>
+                                    <option value="Lazer">Lazer</option>
+                                    <option value="Compras">Compras</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Limite Mensal Máximo (R$)</label>
+                                <input type="number" step="0.01" id="budgetLimit" class="input-control" placeholder="Ex: 500,00" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Salvar Orçamento</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Lista de Barras de Progresso -->
+                    <div id="budgetsList" style="display: flex; flex-direction: column; gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                        <div style="text-align:center; color: var(--text-muted); padding: 2rem;">Carregando orçamentos...</div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+    
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(reg => {
+            console.log('SW registered!', reg);
+          }).catch(err => console.log('SW registration failed', err));
+        });
+      }
+    </script>
+</body>
+</html>
+<!-- --- TÉRMINO DO ARQUIVO --- -->

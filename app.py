@@ -203,6 +203,10 @@ def js(filename):
 def manifest():
     return send_from_directory(FRONTEND_PATH, 'manifest.json')
 
+@app.route('/orcamentos')
+def page_orcamentos():
+    return send_from_directory(os.path.join(FRONTEND_PATH, 'html'), 'orcamentos.html')
+
 @app.route('/sw.js')
 def sw():
     return send_from_directory(FRONTEND_PATH, 'sw.js')

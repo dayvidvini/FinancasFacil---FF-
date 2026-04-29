@@ -173,16 +173,21 @@ select.input-control { appearance: auto; }
     display: flex;
     flex: 1;
     max-width: 1400px;
-    margin: 0 auto;
-    width: 100%;
+    margin: 1.5rem auto;
+    width: calc(100% - 3rem);
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    min-height: calc(100vh - 100px);
 }
 .sidebar {
     width: 260px;
-    background: var(--card-bg);
-    border-radius: 12px;
-    margin: 1.5rem;
-    padding: 1.5rem 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    background: transparent;
+    border-radius: 16px 0 0 16px;
+    margin: 0;
+    padding: 2rem 1.5rem;
+    box-shadow: none;
+    border-right: 1px solid var(--border-color);
     height: max-content;
     flex-shrink: 0;
     position: sticky;
@@ -210,11 +215,11 @@ select.input-control { appearance: auto; }
 /* Corpo principal das telas */
 .main-content {
     flex: 1;
-    padding: 1.5rem 1.5rem 1.5rem 0; /* Espaço direito e compensação do sidebar na esq */
+    padding: 0;
 }
 /* Envelope Branco principal quando exigido */
 .envelope-card {
-    background: var(--card-bg); border-radius: 12px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    background: transparent; border-radius: 0; padding: 2rem; box-shadow: none;
 }
 .header { margin-bottom: 1.5rem; }
 
@@ -316,13 +321,13 @@ body.dark-theme .theme-box.active { background: rgba(59, 130, 246, 0.15); color:
 .charts-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
 @media(min-width: 900px){ .charts-grid { grid-template-columns: 2fr 1fr; } }
 .charts-grid-alt { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;}
-.chart-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 1.5rem;}
+.chart-card { background: transparent; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.5rem;}
 .chart-header { margin-bottom: 1.5rem; }
 .chart-header h3 { font-size: 1rem; }
 .chart-header p { font-size: 0.75rem; color: var(--text-muted); }
 
 .form-container { max-width: 700px; }
-.form-card { padding: 2rem; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
+.form-card { padding: 2rem; background: transparent; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.5rem; }
 .form-header { margin-bottom: 1.5rem; }
 .form-header h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 8px; font-weight: 600;}
 .form-header p { font-size: 0.875rem; color: var(--text-muted); margin-top: 4px; }

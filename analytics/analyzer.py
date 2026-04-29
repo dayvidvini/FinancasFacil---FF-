@@ -83,8 +83,8 @@ def calculate_analytics(transactions, budgets=None):
     
     # Sugestão de Gasto Diário para não ficar no negativo
     daily_suggestion = 0.0
-    if balance > 0 and remaining_days > 0:
-        daily_suggestion = balance / remaining_days
+    if balance > 0 and days_in_month > 0:
+        daily_suggestion = balance / days_in_month
         
     # Médias usadas na tela "Relatórios"
     # Fazemos uma média fictícia divindo pelo ano em si ou tempo fixo pra simplificar
