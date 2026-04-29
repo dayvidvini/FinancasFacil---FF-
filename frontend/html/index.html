@@ -26,6 +26,11 @@
             <div class="auth-tab" onclick="toggleAuth('register')">Cadastro</div>
         </div>
 
+        <div id="customAlert" style="display: none; background: rgba(0, 195, 123, 0.1); color: #00a86b; border: 1px solid rgba(0, 195, 123, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; width: 100%; max-width: 440px; font-size: 0.95rem; text-align: center; line-height: 1.5; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <i class="fa-solid fa-envelope-circle-check" style="margin-right: 8px; font-size: 1.2rem; vertical-align: middle;"></i>
+            <span id="customAlertText" style="vertical-align: middle;"></span>
+        </div>
+
         <div class="card auth-form-card">
             <!-- Login Form -->
             <form id="loginForm" class="form-toggle active" onsubmit="handleLogin(event)">

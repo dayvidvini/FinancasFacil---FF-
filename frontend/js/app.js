@@ -110,7 +110,15 @@ window.handleRegister = async function(event) {
         });
         const data = await res.json();
         if(res.ok) {
-            alert(data.message || "Conta criada! Pode fazer login.");
+            const customAlert = document.getElementById('customAlert');
+            const alertText = document.getElementById('customAlertText');
+            if (customAlert && alertText) {
+                alertText.innerHTML = "<strong>Conta criada com sucesso!</strong><br>Foi enviado um e-mail de confirmação para o endereço informado. Verifique sua <b>Caixa de Entrada</b> ou a pasta de <b>Spam</b>.";
+                customAlert.style.display = 'block';
+                document.getElementById('registerForm').reset();
+            } else {
+                alert("Foi enviado um e-mail de confirmação para o endereço informado. Verifique sua Caixa de Entrada ou a pasta de Spam.");
+            }
             if(typeof toggleAuth === 'function') toggleAuth('login');
         } else alert(data.error);
     } catch(err) {
