@@ -238,7 +238,7 @@ def register():
         }, app.config['SECRET_KEY'], algorithm="HS256")
         
         # Enviar Email
-        verify_link = f"http://localhost:5000/api/auth/verify/{token}"
+        verify_link = f"{request.host_url}api/auth/verify/{token}"
         html_body = f"""
         <h2>Bem-vindo ao Finanças Fácil!</h2>
         <p>Olá {data['name']}, clique no link abaixo para verificar sua conta:</p>
@@ -324,7 +324,7 @@ def forgot_password():
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }, app.config['SECRET_KEY'], algorithm="HS256")
         
-        reset_link = f"http://localhost:5000/reset?token={token}"
+        reset_link = f"{request.host_url}reset?token={token}"
         html_body = f"""
         <h2>Recuperação de Senha</h2>
         <p>Olá {user['name']}, recebemos um pedido para alterar sua senha.</p>
