@@ -2,7 +2,7 @@
 // Este arquivo cuida de toda a interatividade do site: ele escuta cliques, 
 // formulários, salva o usuário autenticado, e conecta ao servidor Node (no :3000)
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = '/api';
 
 // -> Wrapper de API para injetar o Token JWT
 async function apiFetch(url, options = {}) {
