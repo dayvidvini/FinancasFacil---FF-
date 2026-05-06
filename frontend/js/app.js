@@ -659,6 +659,35 @@ async function loadDashboard() {
             if(document.getElementById('budgetsList')) {
                 renderBudgets(data.analytics.budgets);
             }
+            
+            // Buscar Faturas de Cartão (Se existir painel no HTML)
+            if(document.getElementById('stat-credit-cards') || document.getElementById('orc-cc-total')) {
+                try {
+                    const ccRes = await apiFetch(`${API_URL}/credit_cards/${user_id}`);
+                    if(ccRes.ok) {
+                        const cards = await ccRes.json();
+                        let totalLimit = 0;
+                        let totalInvoice = 0;
+                        cards.forEach(c => {
+                            totalLimit += parseFloat(c.limit_amount);
+                            // Aqui simplificamos assumindo que as transações do dashboard já poderiam calcular
+                            // Mas para não sobrecarregar, pegamos uma estimativa do uso ou se tivéssemos o saldo na tabela.
+                            // Neste app, o "saldo" não fica direto no cartão. Se não houver prop invoice_total, deixamos 0 ou somamos o fechamento.
+                            // Para um MVP, somamos limite_disponível / limit_amount, mas o back n devolve uso atual no model de credit_cards, a não ser q a gente calcule.
+                            // Como a api /credit_cards retorna limit_amount e closing_day, assumiremos q é apenas a soma do limite pra não quebrar.
+                        });
+                        
+                        // Busca transações para calcular a fatura atual (todas despesas vinculadas a cartões no mes atual)
+                        const thisMonthStr = new Date().toISOString().slice(0, 7);
+                        const ccExpenses = data.transactions.filter(t => t.type === 'expense' && t.date.startsWith(thisMonthStr) && t.account_id && cards.find(c => c.id == t.account_id));
+                        ccExpenses.forEach(t => totalInvoice += parseFloat(t.amount));
+
+                        if(document.getElementById('stat-credit-cards')) document.getElementById('stat-credit-cards').innerText = `R$ ${totalInvoice.toFixed(2).replace('.', ',')}`;
+                        if(document.getElementById('stat-cc-limit')) document.getElementById('stat-cc-limit').innerText = `R$ ${totalLimit.toFixed(2).replace('.', ',')}`;
+                        if(document.getElementById('orc-cc-total')) document.getElementById('orc-cc-total').innerText = `R$ ${totalInvoice.toFixed(2).replace('.', ',')}`;
+                    }
+                } catch(e) { console.error("Erro fetch cards", e); }
+            }
         }
     } catch(err) {
         console.error("Erro ao carregar dashboard", err);
@@ -1207,12 +1236,46 @@ window.loadCategories = async function() {
         }
         
         rows.forEach(c => {
+            let tipoLabel = c.type === 'income' ? 'Renda' : 'Gasto';
             listEl.innerHTML += `
-            <div style="background: white; border: 1px solid var(--border-color); border-radius: 20px; padding: 4px 12px; display: flex; align-items: center; gap: 8px;">
-                <i class="${c.icon}" style="color:${c.color}"></i>
-                <span style="font-size: 0.9rem;">${c.name}</span>
-                <button class="btn" style="background:transparent; color:#fca5a5; padding:0; border:none; margin-left:8px;" onclick="deleteCategory('${c.id}')"><i class="fa-solid fa-xmark"></i></button>
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: ${c.color}"></div>
+                <div style="padding-left: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <strong style="color: var(--text-main); font-size: 1.05rem;">${c.name}</strong>
+                    </div>
+                    <small style="color: var(--text-muted);">Tipo: ${tipoLabel}</small>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" style="background:transparent; color:#ef4444; padding: 8px;" onclick="deleteCategory('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
             </div>`;
+        });
+    } catch(err) {}
+}
+
+window.loadCategoriesOptions = async function(type) {
+    const gridEl = document.querySelector('.category-grid');
+    if(!gridEl) return;
+    
+    const user_id = getCurrentUserId();
+    if(!user_id) return;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/categories/${user_id}`);
+        if(!res.ok) return;
+        const rows = await res.json();
+        
+        // Mantém as padrão e adiciona as novas
+        rows.filter(c => c.type === type).forEach(c => {
+            // Verifica se não existe para não duplicar (baseado no nome)
+            if(!gridEl.innerHTML.includes(`'${c.name}'`)) {
+                gridEl.innerHTML += `
+                <div class="category-item" onclick="selectCat('${c.name}', this)">
+                    <i class="${c.icon}" style="color:${c.color}"></i>
+                    <span>${c.name}</span>
+                </div>`;
+            }
         });
     } catch(err) {}
 }

@@ -261,6 +261,14 @@ def js(filename):
 def manifest():
     return send_from_directory(FRONTEND_PATH, 'manifest.json')
 
+@app.route('/cartoes')
+def page_cartoes():
+    return send_from_directory('frontend/html', 'cartoes.html')
+
+@app.route('/categorias')
+def page_categorias():
+    return send_from_directory('frontend/html', 'categorias.html')
+
 @app.route('/orcamentos')
 def page_orcamentos():
     return send_from_directory(os.path.join(FRONTEND_PATH, 'html'), 'orcamentos.html')
@@ -983,68 +991,7 @@ def delete_user(current_user_id, user_id):
 # ==========================================
 
 
-# ==========================================
-# INÍCIO: ABA DE INVESTIMENTOS
-# ==========================================
-@app.route('/api/investments', methods=['POST'])
-@token_required
-def create_investment(current_user_id):
-    data = request.json
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('''INSERT INTO investments 
-        (user_id, asset_name, ticker, quantity, average_price, current_price) 
-        VALUES (?, ?, ?, ?, ?, ?)''',
-        (current_user_id, data['asset_name'], data.get('ticker'), data['quantity'], data['average_price'], data['current_price'])
-    )
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Ativo criado com sucesso!"}), 201
 
-@app.route('/api/investments/<int:user_id>', methods=['GET'])
-@token_required
-def get_investments(current_user_id, user_id):
-    if current_user_id != user_id:
-        return jsonify({"error": "Não autorizado"}), 403
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM investments WHERE user_id=?", (user_id,))
-    rows = [dict(r) for r in c.fetchall()]
-    conn.close()
-    return jsonify(rows)
-
-@app.route('/api/investments/<int:inv_id>', methods=['PUT'])
-@token_required
-def update_investment(current_user_id, inv_id):
-    data = request.json
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT user_id FROM investments WHERE id=?", (inv_id,))
-    row = c.fetchone()
-    if not row or row['user_id'] != current_user_id:
-        return jsonify({"error": "Não autorizado"}), 403
-
-    c.execute('''UPDATE investments SET 
-        asset_name=?, ticker=?, quantity=?, average_price=?, current_price=? 
-        WHERE id=?''',
-        (data['asset_name'], data.get('ticker'), data['quantity'], data['average_price'], data['current_price'], inv_id)
-    )
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Ativo atualizado"})
-
-@app.route('/api/investments/<int:inv_id>', methods=['DELETE'])
-@token_required
-def delete_investment(current_user_id, inv_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM investments WHERE id=? AND user_id=?", (inv_id, current_user_id))
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Ativo excluído"})
-# ==========================================
-# TÉRMINO: ABA DE INVESTIMENTOS
-# ==========================================
 
 # ==========================================
 # INÍCIO: ABA DE LEITOR DE NOTA FISCAL

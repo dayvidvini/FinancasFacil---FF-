@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasFácil - Categorias Customizadas</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+</head>
+
+<body>
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div>
+                <h2 class="brand-title">FinançasFácil</h2>
+                <p class="brand-subtitle">Controle financeiro pessoal</p>
+            </div>
+        </div>
+        <div class="logout" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item"><i class="fa-solid fa-border-all"></i> Dashboard</a>
+                <a href="/renda" class="nav-item"><i class="fa-solid fa-arrow-trend-up"></i> Cadastrar Renda</a>
+                <a href="/gasto" class="nav-item"><i class="fa-solid fa-arrow-trend-down"></i> Cadastrar Gasto</a>
+                <a href="/relatorios" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
+                <a href="/orcamentos" class="nav-item"><i class="fa-solid fa-bullseye"></i> Orçamentos</a>
+
+                <a href="/projetos" class="nav-item"><i class="fa-solid fa-rocket"></i> Projetos Futuros</a>
+                <a href="/investimentos" class="nav-item"><i class="fa-solid fa-chart-line"></i> Investimentos</a>
+                <a href="/contas" class="nav-item"><i class="fa-solid fa-wallet"></i> Minhas Contas</a>
+                <a href="/cartoes" class="nav-item"><i class="fa-solid fa-credit-card"></i> Cartões de Crédito</a>
+                <a href="/categorias" class="nav-item active"><i class="fa-solid fa-tags"></i> Categorias</a>
+                <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="envelope-card">
+                <div class="header" style="margin-bottom: 2rem;">
+                    <div class="header-title">
+                        <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Categorias Customizadas</h1>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Crie suas categorias (elas aparecerão ao cadastrar gastos e rendas)</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; align-items: start; max-width: 100%;">
+                    <!-- COLUNA ESQUERDA: Formulário -->
+                    <div>
+                        <div class="form-card">
+                            <div class="form-header">
+                                <h2><i class="fa-solid fa-tags"></i> Nova Categoria</h2>
+                                <p>Crie uma categoria personalizada</p>
+                            </div>
+
+                            <form id="categoryForm" onsubmit="saveCategory(event)">
+                                <div class="input-group">
+                                    <label>Nome</label>
+                                    <input type="text" id="catName" class="input-control" placeholder="Ex: Viagem" required>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div class="input-group">
+                                        <label>Tipo</label>
+                                        <select id="catType" class="input-control">
+                                            <option value="expense">Gasto</option>
+                                            <option value="income">Renda</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Cor</label>
+                                        <input type="color" id="catColor" class="input-control" value="#10b981" style="height: 40px; padding: 2px;">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">Adicionar Categoria</button>
+                            </form>
+                        </div>
+
+                        <div class="tips-card" style="margin-top: 2rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 1.5rem; border-radius: 8px;">
+                            <h4 style="color: #10b981; margin-bottom: 0.5rem;">Dicas</h4>
+                            <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1rem; margin: 0;">
+                                <li>As categorias criadas aqui aparecerão nas opções do Cadastrar Gasto e Renda.</li>
+                                <li>Isso ajuda você a ter relatórios e gráficos mais precisos e separados do seu jeito!</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA: Tabela CRUD -->
+                    <div class="card" style="padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            <i class="fa-solid fa-list-ul" style="color: #10b981; margin-right: 6px;"></i> Suas Categorias
+                        </h3>
+                        <div id="categoriesList" style="display: flex; flex-direction: column; gap: 1rem; max-height: 600px; overflow-y: auto;">
+                            <div style="text-align:center; color: var(--text-muted); padding: 2rem;">Carregando categorias...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/js/app.js"></script>
+    <script>
+        checkAuth();
+        document.addEventListener('DOMContentLoaded', loadCategories);
+    </script>
+</body>
+</html>

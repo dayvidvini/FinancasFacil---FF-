@@ -39,6 +39,7 @@
                 <a href="/investimentos" class="nav-item"><i class="fa-solid fa-chart-line"></i> Investimentos</a>
                 <a href="/contas" class="nav-item"><i class="fa-solid fa-wallet"></i> Minhas Contas</a>
                 <a href="/cartoes" class="nav-item"><i class="fa-solid fa-credit-card"></i> Cartões de Crédito</a>
+                <a href="/categorias" class="nav-item"><i class="fa-solid fa-tags"></i> Categorias</a>
                 <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
             </nav>
         </aside>
@@ -67,9 +68,25 @@
                     <div class="stat-title"><i class="fa-solid fa-wallet text-blue"></i> Saldo Disponível</div>
                     <div class="stat-value text-blue" id="stat-balance">R$ 0,00</div>
                 </div>
-                <div class="stat-card suggestion">
-                    <div class="stat-title"><i class="fa-solid fa-lightbulb text-purple"></i> Sugestão Diária</div>
-                    <div class="stat-value text-purple" id="stat-suggestion">R$ 0,00</div>
+                <div class="stat-card" style="position: relative; overflow: hidden; padding: 0; min-height: 120px;">
+                    <!-- Sugestão Diária -->
+                    <div id="carousel-sugestao" style="padding: 1.5rem; transition: transform 0.4s ease; width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-left: 4px solid var(--accent-purple); background: var(--bg-main); border-radius: 8px;">
+                        <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
+                            <span><i class="fa-solid fa-lightbulb text-purple"></i> Sugestão Diária</span>
+                            <button onclick="toggleStatCarousel()" style="background:transparent; border:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        <div class="stat-value text-purple" id="stat-suggestion">R$ 0,00</div>
+                    </div>
+                    
+                    <!-- Faturas de Cartão -->
+                    <div id="carousel-faturas" style="padding: 1.5rem; transition: transform 0.4s ease; transform: translateX(100%); width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-left: 4px solid #f59e0b; background: var(--bg-main); border-radius: 8px;">
+                        <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
+                            <button onclick="toggleStatCarousel()" style="background:transparent; border:none; cursor:pointer; color:var(--text-muted); margin-right: 5px;"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span style="flex:1"><i class="fa-solid fa-credit-card" style="color:#f59e0b;"></i> Faturas</span>
+                        </div>
+                        <div class="stat-value" id="stat-credit-cards" style="color:#f59e0b;">R$ 0,00</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Total Limite: <span id="stat-cc-limit">R$ 0,00</span></div>
+                    </div>
                 </div>
             </div>
 
@@ -140,12 +157,24 @@
             </div>
         </main>
     </div>
-    
     <script src="/js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', loadDashboard);
+        
+        let showingSuggestion = true;
+        function toggleStatCarousel() {
+            const sug = document.getElementById('carousel-sugestao');
+            const fat = document.getElementById('carousel-faturas');
+            if (showingSuggestion) {
+                sug.style.transform = 'translateX(-100%)';
+                fat.style.transform = 'translateX(0)';
+            } else {
+                sug.style.transform = 'translateX(0)';
+                fat.style.transform = 'translateX(100%)';
+            }
+            showingSuggestion = !showingSuggestion;
+        }
     </script>
-
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
