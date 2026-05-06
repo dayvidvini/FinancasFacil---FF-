@@ -144,6 +144,15 @@ async function submitTransaction(e, type) {
         category = 'Renda';
     }
     
+    let account_id = null;
+    let credit_card_id = null;
+    const transAccountEl = document.getElementById('transAccount');
+    if(transAccountEl && transAccountEl.value) {
+        const val = transAccountEl.value;
+        if(val.startsWith('acc_')) account_id = parseInt(val.replace('acc_', ''));
+        if(val.startsWith('card_')) credit_card_id = parseInt(val.replace('card_', ''));
+    }
+    
     if (frequency === 'Quinzenal' && !transId) {
         const quinzenalType = document.getElementById('transQuinzenalType').value;
         const day1 = parseInt(payment_day);
@@ -160,12 +169,12 @@ async function submitTransaction(e, type) {
             // Parte 1
             const res1 = await apiFetch(url, {
                 method: method,
-                body: JSON.stringify({user_id, type, description: description + ' - 1ª Parte', amount: amount / 2, category, frequency: 'Mensal', payment_day: day1})
+                body: JSON.stringify({user_id, type, description: description + ' - 1ª Parte', amount: amount / 2, category, frequency: 'Mensal', payment_day: day1, account_id, credit_card_id})
             });
             // Parte 2
             const res2 = await apiFetch(url, {
                 method: method,
-                body: JSON.stringify({user_id, type, description: description + ' - 2ª Parte', amount: amount / 2, category, frequency: 'Mensal', payment_day: day2})
+                body: JSON.stringify({user_id, type, description: description + ' - 2ª Parte', amount: amount / 2, category, frequency: 'Mensal', payment_day: day2, account_id, credit_card_id})
             });
             
             if (res1.ok && res2.ok) {
@@ -189,7 +198,7 @@ async function submitTransaction(e, type) {
         const res = await apiFetch(url, {
             method: method,
             
-            body: JSON.stringify({user_id, type, description, amount, category, frequency, payment_day})
+            body: JSON.stringify({user_id, type, description, amount, category, frequency, payment_day, account_id, credit_card_id})
         });
         
         if (res.ok) {
@@ -508,6 +517,11 @@ window.loadSettings = async function() {
             // Aplica e salva tema atual no corpo do HTML globalmente
             localStorage.setItem('ff_user_theme', user.theme || 'Claro');
             applyGlobalTheme();
+            
+            if(document.getElementById('categoriesList')) {
+                loadCategories();
+                loadSharedAccess();
+            }
         }
     } catch(er) { }
 }
@@ -848,6 +862,30 @@ function renderCharts(analytics) {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
     }
+
+    // Gráfico de Previsão de Fluxo de Caixa (Forecast)
+    const ctxForecast = document.getElementById('forecastChart');
+    if(ctxForecast && analytics.forecast) {
+        if(window.forecastChartInst) window.forecastChartInst.destroy();
+        
+        const labels = analytics.forecast.map(f => f.month);
+        const dataIn = analytics.forecast.map(f => f.expected_income);
+        const dataOut = analytics.forecast.map(f => f.expected_expense);
+        const dataBal = analytics.forecast.map(f => f.projected_balance);
+        
+        window.forecastChartInst = new Chart(ctxForecast, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Renda Esperada', data: dataIn, borderColor: '#00c37b', tension: 0.4, borderDash: [5, 5] },
+                    { label: 'Gasto Esperado', data: dataOut, borderColor: '#f43f5e', tension: 0.4, borderDash: [5, 5] },
+                    { label: 'Saldo Projetado', data: dataBal, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.2)', fill: true, tension: 0.4 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
 }
 
 // Verificação de autenticação padrão ao rodar a aba global.
@@ -964,6 +1002,410 @@ function renderCalendar(transactions) {
     }
     
     grid.innerHTML = html;
+}
+// =====================================
+// SESSÃO DE CONTAS (ACCOUNTS)
+// =====================================
+window.loadAccounts = async function() {
+    const listEl = document.getElementById('accountsList');
+    if(!listEl) return;
+    const user_id = getCurrentUserId();
+    
+    try {
+        const res = await apiFetch(`${API_URL}/accounts/${user_id}`);
+        const rows = await res.json();
+        
+        listEl.innerHTML = "";
+        if (!res.ok) throw new Error(rows.error || "Erro ao carregar");
+        if(rows.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem; grid-column: 1 / -1;">Você ainda não cadastrou nenhuma conta.</div>`;
+            return;
+        }
+        
+        rows.forEach(a => {
+            listEl.innerHTML += `
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: ${a.color}"></div>
+                <div style="display:flex; justify-content: space-between; align-items:flex-start;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">${a.name}</h3>
+                        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">${a.type}</p>
+                    </div>
+                    <button class="btn" style="background:transparent; color:#fca5a5; padding:0; border:none;" onclick="deleteAccount('${a.id}')"><i class="fa-solid fa-trash" style="font-size: 1rem;"></i></button>
+                </div>
+                <div style="margin-top: 1.5rem;">
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Saldo Atual</p>
+                    <strong style="font-size: 1.5rem; color: ${a.balance >= 0 ? 'var(--primary-green)' : 'var(--danger-red)'};">R$ ${a.balance.toFixed(2)}</strong>
+                </div>
+            </div>`;
+        });
+    } catch(err) {
+        listEl.innerHTML = `<div style="text-align:center; color: red;">Erro ao carregar contas.</div>`;
+    }
+}
+
+window.saveAccount = async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('accName').value;
+    const type = document.getElementById('accType').value;
+    const balance = parseFloat(document.getElementById('accBalance').value);
+    const color = document.getElementById('accColor').value;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/accounts`, {
+            method: 'POST',
+            body: JSON.stringify({name, type, balance, color})
+        });
+        
+        if (res.ok) {
+            document.getElementById('accountForm').reset();
+            loadAccounts();
+        } else alert("Erro ao salvar conta");
+    } catch(err) {
+        alert("Erro na rede.");
+    }
+}
+
+window.deleteAccount = async function(id) {
+    if(!confirm("Excluir conta permanentemente? (Isso não apagará as transações vinculadas, mas elas perderão a referência da conta)")) return;
+    try {
+        const res = await apiFetch(`${API_URL}/accounts/${id}`, { method: 'DELETE' });
+        if(res.ok) loadAccounts();
+        else alert("Erro ao excluir.");
+    } catch(er) { alert("Falha na rede.") }
+}
+
+// =====================================
+// SESSÃO DE CARTÕES DE CRÉDITO
+// =====================================
+window.loadCreditCards = async function() {
+    const listEl = document.getElementById('cardsList');
+    if(!listEl) return;
+    const user_id = getCurrentUserId();
+    
+    try {
+        const res = await apiFetch(`${API_URL}/credit_cards/${user_id}`);
+        const rows = await res.json();
+        
+        listEl.innerHTML = "";
+        if (!res.ok) throw new Error(rows.error || "Erro ao carregar");
+        if(rows.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem; grid-column: 1 / -1;">Você ainda não cadastrou nenhum cartão.</div>`;
+            return;
+        }
+        
+        rows.forEach(c => {
+            listEl.innerHTML += `
+            <div style="background: ${c.color}; border-radius: 12px; padding: 1.5rem; color: white; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-height: 160px;">
+                <div style="display:flex; justify-content: space-between; align-items:flex-start;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600;">${c.name}</h3>
+                        <p style="margin: 0; font-size: 0.8rem; opacity: 0.8;">Fechamento: Dia ${c.closing_day} | Venc: Dia ${c.due_day}</p>
+                    </div>
+                    <button class="btn" style="background:rgba(255,255,255,0.2); color:white; padding: 4px 8px; border:none;" onclick="deleteCreditCard('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.8;">Limite Total</p>
+                        <strong style="font-size: 1.2rem;">R$ ${c.limit_amount.toFixed(2)}</strong>
+                    </div>
+                    <i class="fa-brands fa-cc-visa" style="font-size: 2rem; opacity: 0.7;"></i>
+                </div>
+            </div>`;
+        });
+    } catch(err) {
+        listEl.innerHTML = `<div style="text-align:center; color: red;">Erro ao carregar cartões.</div>`;
+    }
+}
+
+window.saveCreditCard = async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('cardName').value;
+    const limit_amount = parseFloat(document.getElementById('cardLimit').value);
+    const closing_day = parseInt(document.getElementById('cardClosing').value);
+    const due_day = parseInt(document.getElementById('cardDue').value);
+    const color = document.getElementById('cardColor').value;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/credit_cards`, {
+            method: 'POST',
+            body: JSON.stringify({name, limit_amount, closing_day, due_day, color})
+        });
+        
+        if (res.ok) {
+            document.getElementById('cardForm').reset();
+            loadCreditCards();
+        } else alert("Erro ao salvar cartão");
+    } catch(err) {
+        alert("Erro na rede.");
+    }
+}
+
+window.deleteCreditCard = async function(id) {
+    if(!confirm("Excluir cartão permanentemente?")) return;
+    try {
+        const res = await apiFetch(`${API_URL}/credit_cards/${id}`, { method: 'DELETE' });
+        if(res.ok) loadCreditCards();
+        else alert("Erro ao excluir.");
+    } catch(er) { alert("Falha na rede.") }
+}
+window.loadTransactionOptions = async function() {
+    const optAccounts = document.getElementById('optAccounts');
+    const optCards = document.getElementById('optCards');
+    if(!optAccounts && !optCards) return; // Não estamos na tela de gasto/renda
+    
+    const user_id = getCurrentUserId();
+    
+    try {
+        if(optAccounts) {
+            const resA = await apiFetch(`${API_URL}/accounts/${user_id}`);
+            if(resA.ok) {
+                const accs = await resA.json();
+                optAccounts.innerHTML = '';
+                accs.forEach(a => {
+                    optAccounts.innerHTML += `<option value="acc_${a.id}">${a.name} (R$ ${a.balance.toFixed(2)})</option>`;
+                });
+            }
+        }
+        
+        if(optCards) {
+            const resC = await apiFetch(`${API_URL}/credit_cards/${user_id}`);
+            if(resC.ok) {
+                const cards = await resC.json();
+                optCards.innerHTML = '';
+                cards.forEach(c => {
+                    optCards.innerHTML += `<option value="card_${c.id}">${c.name} (L: R$ ${c.limit_amount.toFixed(2)})</option>`;
+                });
+            }
+        }
+    } catch(err) { console.error(err); }
+}
+
+// Chamar quando a tela carregar
+document.addEventListener('DOMContentLoaded', () => {
+    if(window.location.pathname === '/gasto' || window.location.pathname === '/renda') {
+        loadTransactionOptions();
+    }
+});
+// =====================================
+// SESSÃO DE CATEGORIAS
+// =====================================
+window.loadCategories = async function() {
+    const listEl = document.getElementById('categoriesList');
+    if(!listEl) return;
+    const user_id = getCurrentUserId();
+    
+    try {
+        const res = await apiFetch(`${API_URL}/categories/${user_id}`);
+        const rows = await res.json();
+        
+        listEl.innerHTML = "";
+        if (!res.ok) throw new Error(rows.error || "Erro ao carregar");
+        if(rows.length === 0) {
+            listEl.innerHTML = `<small style="color:var(--text-muted)">Nenhuma categoria customizada.</small>`;
+            return;
+        }
+        
+        rows.forEach(c => {
+            listEl.innerHTML += `
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: 20px; padding: 4px 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="${c.icon}" style="color:${c.color}"></i>
+                <span style="font-size: 0.9rem;">${c.name}</span>
+                <button class="btn" style="background:transparent; color:#fca5a5; padding:0; border:none; margin-left:8px;" onclick="deleteCategory('${c.id}')"><i class="fa-solid fa-xmark"></i></button>
+            </div>`;
+        });
+    } catch(err) {}
+}
+
+window.saveCategory = async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('catName').value;
+    const type = document.getElementById('catType').value;
+    const color = document.getElementById('catColor').value;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/categories`, {
+            method: 'POST',
+            body: JSON.stringify({name, type, color})
+        });
+        if (res.ok) {
+            document.getElementById('categoryForm').reset();
+            loadCategories();
+        }
+    } catch(err) {}
+}
+
+window.deleteCategory = async function(id) {
+    if(!confirm("Excluir categoria?")) return;
+    try {
+        const res = await apiFetch(`${API_URL}/categories/${id}`, { method: 'DELETE' });
+        if(res.ok) loadCategories();
+    } catch(er) {}
+}
+
+// =====================================
+// SESSÃO DE COMPARTILHAMENTO
+// =====================================
+window.loadSharedAccess = async function() {
+    const listEl = document.getElementById('sharedAccessList');
+    if(!listEl) return;
+    const user_id = getCurrentUserId();
+    
+    try {
+        const res = await apiFetch(`${API_URL}/shared_access/${user_id}`);
+        const rows = await res.json();
+        
+        listEl.innerHTML = "";
+        if(rows.length === 0) {
+            listEl.innerHTML = `<small style="color:var(--text-muted)">Nenhum convidado.</small>`;
+            return;
+        }
+        
+        rows.forEach(s => {
+            listEl.innerHTML += `
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="display:block; font-size: 0.9rem;">${s.guest_email}</strong>
+                    <small style="color:var(--text-muted)">Status: ${s.status}</small>
+                </div>
+                <button class="btn" style="background:transparent; color:#fca5a5; padding:0; border:none;" onclick="deleteSharedAccess('${s.id}')"><i class="fa-solid fa-trash"></i></button>
+            </div>`;
+        });
+    } catch(err) {}
+}
+
+window.saveSharedAccess = async function(e) {
+    e.preventDefault();
+    const guest_email = document.getElementById('shareEmail').value;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/shared_access`, {
+            method: 'POST',
+            body: JSON.stringify({guest_email})
+        });
+        if (res.ok) {
+            document.getElementById('sharedAccessForm').reset();
+            loadSharedAccess();
+            alert("Acesso compartilhado criado! Peça para o convidado criar uma conta com o mesmo e-mail.");
+        }
+    } catch(err) {}
+}
+
+window.deleteSharedAccess = async function(id) {
+    if(!confirm("Remover o acesso deste convidado?")) return;
+    try {
+        const res = await apiFetch(`${API_URL}/shared_access/${id}`, { method: 'DELETE' });
+        if(res.ok) loadSharedAccess();
+    } catch(er) {}
+}
+// =====================================
+// SESSÃO DE LEITOR DE NOTA FISCAL
+// =====================================
+let html5QrcodeScanner = null;
+
+window.openInvoiceModal = function() {
+    const modal = document.getElementById('invoiceModal');
+    if(modal) modal.style.display = 'flex';
+}
+
+window.closeInvoiceModal = function() {
+    const modal = document.getElementById('invoiceModal');
+    if(modal) {
+        modal.style.display = 'none';
+        stopQRScanner();
+        document.getElementById('xmlFileInput').value = "";
+    }
+}
+
+window.startQRScanner = function() {
+    const container = document.getElementById('qrReaderContainer');
+    if(!container) return;
+    
+    container.style.display = 'block';
+    
+    if(!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    }
+    
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+    .catch(err => {
+        alert("Erro ao abrir a câmera: " + err);
+        container.style.display = 'none';
+    });
+}
+
+window.stopQRScanner = function() {
+    if(html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+            document.getElementById('qrReaderContainer').style.display = 'none';
+        }).catch(err => {
+            console.error("Falha ao parar scanner", err);
+        });
+    }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    stopQRScanner();
+    document.getElementById('invoiceLoading').style.display = 'block';
+    
+    apiFetch(`${API_URL}/invoice/qrcode`, {
+        method: 'POST',
+        body: JSON.stringify({url: decodedText})
+    })
+    .then(res => res.json())
+    .then(data => processInvoiceData(data))
+    .catch(err => {
+        alert("Erro ao ler QR Code: " + err);
+        document.getElementById('invoiceLoading').style.display = 'none';
+    });
+}
+
+window.handleXMLUpload = function(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    
+    document.getElementById('invoiceLoading').style.display = 'block';
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const token = localStorage.getItem('ff_token');
+    
+    fetch(`${API_URL}/invoice/xml`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => processInvoiceData(data))
+    .catch(err => {
+        alert("Erro ao processar arquivo XML: " + err);
+        document.getElementById('invoiceLoading').style.display = 'none';
+    });
+}
+
+function processInvoiceData(data) {
+    document.getElementById('invoiceLoading').style.display = 'none';
+    
+    if(data.error) {
+        alert("Falha: " + data.error);
+        return;
+    }
+    
+    // Auto preencher o formulário
+    if(document.getElementById('amount')) document.getElementById('amount').value = data.amount.toFixed(2);
+    if(document.getElementById('desc')) document.getElementById('desc').value = data.description;
+    
+    // Auto categorizar
+    if(data.category && document.getElementById('transCat')) {
+        document.getElementById('transCat').value = data.category;
+        // Atualizar interface de categoria se existir
+        if(typeof updateCatGrid === 'function') updateCatGrid();
+    }
+    
+    closeInvoiceModal();
+    alert(`Nota lida com sucesso!\nValor: R$ ${data.amount.toFixed(2)}\nCategoria sugerida: ${data.category}`);
 }
 /* --- TÉRMINO DO ARQUIVO --- */
 

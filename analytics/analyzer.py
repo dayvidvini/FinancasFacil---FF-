@@ -106,6 +106,22 @@ def calculate_analytics(transactions, budgets=None):
         }
     # --- TÉRMINO: ORÇAMENTOS ---
 
+    # --- INÍCIO: PREVISÃO (FORECASTING) ---
+    forecast = []
+    current_month_idx = today.month - 1
+    future_balance = balance
+    for i in range(1, 4):
+        future_month_idx = (current_month_idx + i) % 12
+        month_name = months_list[future_month_idx]
+        future_balance += media_economia
+        forecast.append({
+            'month': month_name,
+            'expected_income': round(media_renda, 2),
+            'expected_expense': round(media_gastos, 2),
+            'projected_balance': round(future_balance, 2)
+        })
+    # --- TÉRMINO: PREVISÃO ---
+
     # --- INÍCIO: DEVOLUÇÃO DOS DADOS ---
     # Montamos um grande dicionário que será devolvido como formato JSON
     return {
@@ -123,7 +139,8 @@ def calculate_analytics(transactions, budgets=None):
         'categories': expenses_by_category,
         'monthly': monthly_data,
         'weekly': weekly_data, # Adicionado para os graficos semanais roxos
-        'budgets': budget_status
+        'budgets': budget_status,
+        'forecast': forecast
     }
     # --- TÉRMINO: DEVOLUÇÃO ---
 

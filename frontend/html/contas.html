@@ -1,10 +1,10 @@
-<!-- --- INÍCIO DO ARQUIVO HTML: PROJETOS FUTUROS --- -->
+<!-- --- INÍCIO DO ARQUIVO HTML: CONTAS --- -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinançasFácil - Projetos Futuros</title>
+    <title>FinançasFácil - Minhas Contas</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
@@ -34,11 +34,10 @@
                 <a href="/renda" class="nav-item"><i class="fa-solid fa-arrow-trend-up"></i> Cadastrar Renda</a>
                 <a href="/gasto" class="nav-item"><i class="fa-solid fa-arrow-trend-down"></i> Cadastrar Gasto</a>
                 <a href="/relatorios" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
-                <a href="/orcamentos" class="nav-item active"><i class="fa-solid fa-bullseye"></i> Orçamentos</a>
-
+                <a href="/orcamentos" class="nav-item"><i class="fa-solid fa-bullseye"></i> Orçamentos</a>
                 <a href="/projetos" class="nav-item"><i class="fa-solid fa-rocket"></i> Projetos Futuros</a>
                 <a href="/investimentos" class="nav-item"><i class="fa-solid fa-chart-line"></i> Investimentos</a>
-                <a href="/contas" class="nav-item"><i class="fa-solid fa-wallet"></i> Minhas Contas</a>
+                <a href="/contas" class="nav-item active"><i class="fa-solid fa-wallet"></i> Minhas Contas</a>
                 <a href="/cartoes" class="nav-item"><i class="fa-solid fa-credit-card"></i> Cartões de Crédito</a>
                 <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
             </nav>
@@ -46,42 +45,47 @@
 
         <!-- Aba central -->
         <main class="main-content">
-            <!-- ENVELOPE BRANCO GRANDE EXIGIDO NO PRINT -->
+            <!-- ENVELOPE BRANCO GRANDE -->
             <div class="envelope-card">
                 
                 <div style="margin-bottom: 2rem;">
-                    <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Orçamentos e Metas</h1>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Controle o limite de gastos mensais por categoria</p>
+                    <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Minhas Contas e Carteiras</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Gerencie seus saldos separados por conta bancária ou dinheiro vivo</p>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
-                    <!-- Formulário de Orçamento -->
+                    <!-- Formulário -->
                     <div style="background: var(--bg-main); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Definir Limite</h4>
-                        <form id="budgetForm" onsubmit="saveBudget(event)">
+                        <h4 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Nova Conta</h4>
+                        <form id="accountForm" onsubmit="saveAccount(event)">
                             <div class="input-group">
-                                <label>Categoria</label>
-                                <select id="budgetCategory" class="input-control" required>
-                                    <option value="Moradia">Moradia</option>
-                                    <option value="Alimentação">Alimentação</option>
-                                    <option value="Transporte">Transporte</option>
-                                    <option value="Contas">Contas (Água, Luz, etc)</option>
-                                    <option value="Lazer">Lazer</option>
-                                    <option value="Compras">Compras</option>
-                                    <option value="Outros">Outros</option>
+                                <label>Nome da Conta (Ex: Itaú, NuConta, Carteira)</label>
+                                <input type="text" id="accName" class="input-control" placeholder="NuConta" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Tipo</label>
+                                <select id="accType" class="input-control" required>
+                                    <option value="Corrente">Conta Corrente</option>
+                                    <option value="Poupanca">Conta Poupança</option>
+                                    <option value="Dinheiro">Dinheiro Vivo</option>
+                                    <option value="Investimento">Corretora/Investimentos</option>
                                 </select>
                             </div>
                             <div class="input-group">
-                                <label>Limite Mensal Máximo (R$)</label>
-                                <input type="number" step="0.01" id="budgetLimit" class="input-control" placeholder="Ex: 500,00" required>
+                                <label>Saldo Inicial (R$)</label>
+                                <input type="number" step="0.01" id="accBalance" class="input-control" placeholder="0,00" value="0.00" required>
                             </div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Salvar Orçamento</button>
+                            <div class="input-group">
+                                <label>Cor de Identificação</label>
+                                <input type="color" id="accColor" class="input-control" style="height: 40px; padding: 2px;" value="#8b5cf6">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Adicionar Conta</button>
                         </form>
                     </div>
                     
-                    <!-- Lista de Barras de Progresso -->
-                    <div id="budgetsList" style="display: flex; flex-direction: column; gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 10px;">
-                        <div style="text-align:center; color: var(--text-muted); padding: 2rem;">Carregando orçamentos...</div>
+                    <!-- Lista de Contas -->
+                    <div id="accountsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                        <div style="text-align:center; color: var(--text-muted); padding: 2rem; grid-column: 1 / -1;">Carregando contas...</div>
                     </div>
                 </div>
 
@@ -91,16 +95,7 @@
     
     <script src="/js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', loadDashboard);
-    </script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(reg => {
-            console.log('SW registered!', reg);
-          }).catch(err => console.log('SW registration failed', err));
-        });
-      }
+        document.addEventListener('DOMContentLoaded', loadAccounts);
     </script>
 </body>
 </html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasFácil - Investimentos</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+</head>
+
+<body>
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div>
+                <h2 class="brand-title">FinançasFácil</h2>
+                <p class="brand-subtitle">Controle financeiro pessoal</p>
+            </div>
+        </div>
+        <div class="logout" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item"><i class="fa-solid fa-border-all"></i> Dashboard</a>
+                <a href="/renda" class="nav-item"><i class="fa-solid fa-arrow-trend-up"></i> Cadastrar Renda</a>
+                <a href="/gasto" class="nav-item"><i class="fa-solid fa-arrow-trend-down"></i> Cadastrar Gasto</a>
+                <a href="/relatorios" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
+                <a href="/orcamentos" class="nav-item"><i class="fa-solid fa-bullseye"></i> Orçamentos</a>
+
+                <a href="/projetos" class="nav-item"><i class="fa-solid fa-rocket"></i> Projetos Futuros</a>
+                <a href="/investimentos" class="nav-item active"><i class="fa-solid fa-chart-line"></i> Investimentos</a>
+                <a href="/contas" class="nav-item"><i class="fa-solid fa-wallet"></i> Minhas Contas</a>
+                <a href="/cartoes" class="nav-item"><i class="fa-solid fa-credit-card"></i> Cartões de Crédito</a>
+                <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="envelope-card">
+                <div class="header" style="margin-bottom: 2rem;">
+                    <div class="header-title">
+                        <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Meus Investimentos</h1>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Acompanhe sua carteira de ativos</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="toggleInvestmentForm()">
+                        <i class="fa-solid fa-plus"></i> Novo Ativo
+                    </button>
+                </div>
+
+                <div id="investmentFormContainer" style="display: none; margin-bottom: 2rem;">
+                    <div class="form-card" style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
+                        <div class="form-header">
+                            <h2><i class="fa-solid fa-chart-line" style="color:var(--primary-green)"></i> Cadastrar Ativo</h2>
+                        </div>
+                        <form id="investmentForm" onsubmit="saveInvestment(event)">
+                            <input type="hidden" id="invId" value="">
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div class="input-group" style="margin: 0;">
+                                    <label>Nome do Ativo (ex: Tesouro Selic)</label>
+                                    <input type="text" id="invName" class="input-control" required>
+                                </div>
+                                <div class="input-group" style="margin: 0;">
+                                    <label>Código/Ticker (ex: BOVA11)</label>
+                                    <input type="text" id="invTicker" class="input-control">
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="input-group" style="margin: 0;">
+                                    <label>Quantidade</label>
+                                    <input type="number" step="0.01" id="invQuantity" class="input-control" required>
+                                </div>
+                                <div class="input-group" style="margin: 0;">
+                                    <label>Preço Médio (R$)</label>
+                                    <input type="number" step="0.01" id="invAvgPrice" class="input-control" required>
+                                </div>
+                                <div class="input-group" style="margin: 0;">
+                                    <label>Preço Atual (R$)</label>
+                                    <input type="number" step="0.01" id="invCurPrice" class="input-control" required>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap: 1rem;">
+                                <button type="submit" id="invSubmitBtn" class="btn btn-primary">Salvar Investimento</button>
+                                <button type="button" class="btn" style="background:#e5e7eb; color:#374151;" onclick="toggleInvestmentForm()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="investmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        checkAuth();
+        document.addEventListener('DOMContentLoaded', () => {
+            loadInvestments();
+        });
+
+        function toggleInvestmentForm() {
+            const form = document.getElementById('investmentFormContainer');
+            if(form.style.display === 'none') {
+                form.style.display = 'block';
+                document.getElementById('investmentForm').reset();
+                document.getElementById('invId').value = '';
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
+        window.loadInvestments = async function() {
+            const listEl = document.getElementById('investmentsList');
+            if(!listEl) return;
+            const user_id = getCurrentUserId();
+            
+            try {
+                const res = await apiFetch(`/api/investments/${user_id}`);
+                const rows = await res.json();
+                
+                listEl.innerHTML = "";
+                if(rows.length === 0) {
+                    listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem; grid-column: 1 / -1;">Você ainda não cadastrou nenhum investimento.</div>`;
+                    return;
+                }
+                
+                rows.forEach(inv => {
+                    const totalInvested = inv.quantity * inv.average_price;
+                    const currentValue = inv.quantity * inv.current_price;
+                    const diff = currentValue - totalInvested;
+                    const diffPerc = totalInvested > 0 ? (diff / totalInvested) * 100 : 0;
+                    
+                    listEl.innerHTML += `
+                    <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+                        <div style="display:flex; justify-content: space-between; align-items:flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">${inv.asset_name}</h3>
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${inv.ticker || 'N/A'} • Qtd: ${inv.quantity}</p>
+                            </div>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn" style="background:transparent; color:#3b82f6; padding:0; border:none;" onclick="editInvestment('${inv.id}', '${inv.asset_name}', '${inv.ticker}', ${inv.quantity}, ${inv.average_price}, ${inv.current_price})"><i class="fa-solid fa-pen"></i></button>
+                                <button class="btn" style="background:transparent; color:#fca5a5; padding:0; border:none;" onclick="deleteInvestment('${inv.id}')"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; font-size: 0.9rem;">
+                            <div>
+                                <small style="color:var(--text-muted)">Preço Médio</small>
+                                <div style="font-weight: 500;">R$ ${inv.average_price.toFixed(2)}</div>
+                            </div>
+                            <div>
+                                <small style="color:var(--text-muted)">Preço Atual</small>
+                                <div style="font-weight: 500;">R$ ${inv.current_price.toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                            <div>
+                                <small style="color:var(--text-muted)">Valor Total</small>
+                                <div style="font-size: 1.2rem; font-weight: 600;">R$ ${currentValue.toFixed(2)}</div>
+                            </div>
+                            <div style="text-align: right; color: ${diff >= 0 ? 'var(--primary-green)' : 'var(--danger-red)'}; font-weight: 500; font-size: 0.95rem;">
+                                ${diff >= 0 ? '+' : ''}R$ ${diff.toFixed(2)} (${diffPerc.toFixed(2)}%)
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            } catch(err) {}
+        }
+
+        window.saveInvestment = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('invId').value;
+            const asset_name = document.getElementById('invName').value;
+            const ticker = document.getElementById('invTicker').value;
+            const quantity = parseFloat(document.getElementById('invQuantity').value);
+            const average_price = parseFloat(document.getElementById('invAvgPrice').value);
+            const current_price = parseFloat(document.getElementById('invCurPrice').value);
+            
+            try {
+                const url = id ? `/api/investments/${id}` : `/api/investments`;
+                const method = id ? 'PUT' : 'POST';
+                const res = await apiFetch(url, {
+                    method: method,
+                    body: JSON.stringify({asset_name, ticker, quantity, average_price, current_price})
+                });
+                if (res.ok) {
+                    toggleInvestmentForm();
+                    loadInvestments();
+                }
+            } catch(err) {}
+        }
+
+        window.editInvestment = function(id, name, ticker, qty, avg, cur) {
+            const form = document.getElementById('investmentFormContainer');
+            form.style.display = 'block';
+            document.getElementById('invId').value = id;
+            document.getElementById('invName').value = name;
+            document.getElementById('invTicker').value = ticker !== 'null' ? ticker : '';
+            document.getElementById('invQuantity').value = qty;
+            document.getElementById('invAvgPrice').value = avg;
+            document.getElementById('invCurPrice').value = cur;
+        }
+
+        window.deleteInvestment = async function(id) {
+            if(!confirm("Excluir este ativo?")) return;
+            try {
+                const res = await apiFetch(`/api/investments/${id}`, { method: 'DELETE' });
+                if(res.ok) loadInvestments();
+            } catch(er) {}
+        }
+    </script>
+</body>
+</html>

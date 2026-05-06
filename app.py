@@ -12,6 +12,9 @@ import io
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import xml.etree.ElementTree as ET
+import urllib.request
+import re
 
 
 try:
@@ -115,6 +118,61 @@ def init_db():
         limit_amount REAL,
         UNIQUE(user_id, category)
     )''')
+
+    # Novas tabelas para Expansão
+    c.execute('''CREATE TABLE IF NOT EXISTS accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT,
+        type TEXT,
+        balance REAL DEFAULT 0,
+        color TEXT DEFAULT '#4f46e5'
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS credit_cards (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT,
+        limit_amount REAL DEFAULT 0,
+        closing_day INTEGER,
+        due_day INTEGER,
+        color TEXT DEFAULT '#e11d48'
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT,
+        type TEXT,
+        color TEXT DEFAULT '#10b981',
+        icon TEXT DEFAULT 'fas fa-tag'
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS investments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        asset_name TEXT,
+        ticker TEXT,
+        quantity REAL DEFAULT 0,
+        average_price REAL DEFAULT 0,
+        current_price REAL DEFAULT 0,
+        date_bought DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS shared_access (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        owner_id INTEGER,
+        guest_email TEXT,
+        status TEXT DEFAULT 'pending'
+    )''')
+
+    # Alterar transactions para adicionar chaves estrangeiras
+    try: c.execute("ALTER TABLE transactions ADD COLUMN account_id INTEGER")
+    except: pass
+    try: c.execute("ALTER TABLE transactions ADD COLUMN credit_card_id INTEGER")
+    except: pass
+    try: c.execute("ALTER TABLE transactions ADD COLUMN category_id INTEGER")
+    except: pass
 
     conn.commit()
     conn.close()
@@ -382,8 +440,8 @@ def create_transaction(current_user_id):
         date_val = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     c.execute('''INSERT INTO transactions
-        (user_id, type, description, amount, category, frequency, payment_day, date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+        (user_id, type, description, amount, category, frequency, payment_day, date, account_id, credit_card_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         (
             current_user_id,
             data['type'],
@@ -392,7 +450,9 @@ def create_transaction(current_user_id):
             data['category'],
             data.get('frequency', 'Única'),
             data.get('payment_day'),
-            date_val
+            date_val,
+            data.get('account_id'),
+            data.get('credit_card_id')
         )
     )
     conn.commit()
@@ -413,12 +473,12 @@ def update_transaction(current_user_id, trans_id):
         return jsonify({"error": "Não autorizado"}), 403
 
     c.execute('''UPDATE transactions SET
-        type=?, description=?, amount=?, category=?, frequency=?, payment_day=?
+        type=?, description=?, amount=?, category=?, frequency=?, payment_day=?, account_id=?, credit_card_id=?
         WHERE id=?''',
         (
             data['type'], data['description'], data['amount'], 
             data['category'], data.get('frequency', 'Única'), 
-            data.get('payment_day'), trans_id
+            data.get('payment_day'), data.get('account_id'), data.get('credit_card_id'), trans_id
         )
     )
     conn.commit()
@@ -605,6 +665,193 @@ def save_budget(current_user_id):
 
 
 # ==========================================
+# INÍCIO: ABA DE EXPANSÃO (CONTAS E CARTÕES)
+# ==========================================
+@app.route('/api/accounts', methods=['POST'])
+@token_required
+def create_account(current_user_id):
+    data = request.json
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO accounts (user_id, name, type, balance, color)
+                 VALUES (?, ?, ?, ?, ?)''',
+              (current_user_id, data['name'], data['type'], data.get('balance', 0), data.get('color', '#4f46e5')))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Conta criada"})
+
+@app.route('/api/accounts/<int:user_id>', methods=['GET'])
+@token_required
+def get_accounts(current_user_id, user_id):
+    if current_user_id != user_id: return jsonify({"error": "Não autorizado"}), 403
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM accounts WHERE user_id=?", (user_id,))
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/api/accounts/<int:account_id>', methods=['DELETE'])
+@token_required
+def delete_account(current_user_id, account_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM accounts WHERE id=? AND user_id=?", (account_id, current_user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Conta deletada"})
+
+
+@app.route('/api/credit_cards', methods=['POST'])
+@token_required
+def create_credit_card(current_user_id):
+    data = request.json
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO credit_cards (user_id, name, limit_amount, closing_day, due_day, color)
+                 VALUES (?, ?, ?, ?, ?, ?)''',
+              (current_user_id, data['name'], data.get('limit_amount', 0), data['closing_day'], data['due_day'], data.get('color', '#e11d48')))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Cartão criado"})
+
+@app.route('/api/credit_cards/<int:user_id>', methods=['GET'])
+@token_required
+def get_credit_cards(current_user_id, user_id):
+    if current_user_id != user_id: return jsonify({"error": "Não autorizado"}), 403
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM credit_cards WHERE user_id=?", (user_id,))
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/api/credit_cards/<int:card_id>', methods=['DELETE'])
+@token_required
+def delete_credit_card(current_user_id, card_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM credit_cards WHERE id=? AND user_id=?", (card_id, current_user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Cartão deletado"})
+# ==========================================
+# TÉRMINO: ABA DE EXPANSÃO (CONTAS E CARTÕES)
+# ==========================================
+
+
+# ==========================================
+# INÍCIO: ABA DE EXPANSÃO (CATEGORIAS, INVESTIMENTOS, COMPARTILHAMENTO)
+# ==========================================
+@app.route('/api/categories', methods=['POST'])
+@token_required
+def create_category(current_user_id):
+    data = request.json
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO categories (user_id, name, type, color, icon)
+                 VALUES (?, ?, ?, ?, ?)''',
+              (current_user_id, data['name'], data['type'], data.get('color', '#10b981'), data.get('icon', 'fas fa-tag')))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Categoria criada"})
+
+@app.route('/api/categories/<int:user_id>', methods=['GET'])
+@token_required
+def get_categories(current_user_id, user_id):
+    if current_user_id != user_id: return jsonify({"error": "Não autorizado"}), 403
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM categories WHERE user_id=?", (user_id,))
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/api/categories/<int:cat_id>', methods=['DELETE'])
+@token_required
+def delete_category(current_user_id, cat_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM categories WHERE id=? AND user_id=?", (cat_id, current_user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Categoria deletada"})
+
+
+@app.route('/api/investments', methods=['POST'])
+@token_required
+def create_investment(current_user_id):
+    data = request.json
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO investments (user_id, asset_name, ticker, quantity, average_price, current_price)
+                 VALUES (?, ?, ?, ?, ?, ?)''',
+              (current_user_id, data['asset_name'], data['ticker'], data.get('quantity', 0), data.get('average_price', 0), data.get('current_price', 0)))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Investimento criado"})
+
+@app.route('/api/investments/<int:user_id>', methods=['GET'])
+@token_required
+def get_investments(current_user_id, user_id):
+    if current_user_id != user_id: return jsonify({"error": "Não autorizado"}), 403
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM investments WHERE user_id=?", (user_id,))
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/api/investments/<int:inv_id>', methods=['DELETE'])
+@token_required
+def delete_investment(current_user_id, inv_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM investments WHERE id=? AND user_id=?", (inv_id, current_user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Investimento deletado"})
+
+
+@app.route('/api/shared_access', methods=['POST'])
+@token_required
+def create_shared_access(current_user_id):
+    data = request.json
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO shared_access (owner_id, guest_email, status)
+                 VALUES (?, ?, 'active')''',
+              (current_user_id, data['guest_email']))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Acesso compartilhado criado"})
+
+@app.route('/api/shared_access/<int:user_id>', methods=['GET'])
+@token_required
+def get_shared_access(current_user_id, user_id):
+    if current_user_id != user_id: return jsonify({"error": "Não autorizado"}), 403
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM shared_access WHERE owner_id=?", (user_id,))
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/api/shared_access/<int:share_id>', methods=['DELETE'])
+@token_required
+def delete_shared_access(current_user_id, share_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM shared_access WHERE id=? AND owner_id=?", (share_id, current_user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Acesso compartilhado removido"})
+# ==========================================
+# TÉRMINO: ABA DE EXPANSÃO (CATEGORIAS, INVESTIMENTOS, COMPARTILHAMENTO)
+# ==========================================
+
+
+# ==========================================
 # INÍCIO: DASHBOARD E EXPORTAÇÃO
 # ==========================================
 @app.route('/api/dashboard/<int:user_id>')
@@ -735,6 +982,153 @@ def delete_user(current_user_id, user_id):
 # TÉRMINO: ABA DE CONFIGURAÇÕES DE CONTA E PERFIL
 # ==========================================
 
+
+# ==========================================
+# INÍCIO: ABA DE INVESTIMENTOS
+# ==========================================
+@app.route('/api/investments', methods=['POST'])
+@token_required
+def create_investment(current_user_id):
+    data = request.json
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO investments 
+        (user_id, asset_name, ticker, quantity, average_price, current_price) 
+        VALUES (?, ?, ?, ?, ?, ?)''',
+        (current_user_id, data['asset_name'], data.get('ticker'), data['quantity'], data['average_price'], data['current_price'])
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Ativo criado com sucesso!"}), 201
+
+@app.route('/api/investments/<int:user_id>', methods=['GET'])
+@token_required
+def get_investments(current_user_id, user_id):
+    if current_user_id != user_id:
+        return jsonify({"error": "Não autorizado"}), 403
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM investments WHERE user_id=?", (user_id,))
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/api/investments/<int:inv_id>', methods=['PUT'])
+@token_required
+def update_investment(current_user_id, inv_id):
+    data = request.json
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT user_id FROM investments WHERE id=?", (inv_id,))
+    row = c.fetchone()
+    if not row or row['user_id'] != current_user_id:
+        return jsonify({"error": "Não autorizado"}), 403
+
+    c.execute('''UPDATE investments SET 
+        asset_name=?, ticker=?, quantity=?, average_price=?, current_price=? 
+        WHERE id=?''',
+        (data['asset_name'], data.get('ticker'), data['quantity'], data['average_price'], data['current_price'], inv_id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Ativo atualizado"})
+
+@app.route('/api/investments/<int:inv_id>', methods=['DELETE'])
+@token_required
+def delete_investment(current_user_id, inv_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM investments WHERE id=? AND user_id=?", (inv_id, current_user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Ativo excluído"})
+# ==========================================
+# TÉRMINO: ABA DE INVESTIMENTOS
+# ==========================================
+
+# ==========================================
+# INÍCIO: ABA DE LEITOR DE NOTA FISCAL
+# ==========================================
+def auto_categorize(description):
+    desc = str(description).upper()
+    if any(word in desc for word in ['SUPERMERCADO', 'MERCADO', 'PADARIA', 'RESTAURANTE', 'LANCHONETE', 'IFOOD', 'DOCERIA', 'AÇOUGUE', 'ATACADAO']):
+        return 'Alimentação'
+    if any(word in desc for word in ['POSTO', 'AUTO', 'GASOLINA', 'UBER', '99']):
+        return 'Transporte'
+    if any(word in desc for word in ['FARMACIA', 'DROGARIA']):
+        return 'Saúde'
+    return 'Geral'
+
+@app.route('/api/invoice/xml', methods=['POST'])
+@token_required
+def read_invoice_xml(current_user_id):
+    if 'file' not in request.files:
+        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+    
+    file = request.files['file']
+    try:
+        tree = ET.parse(file)
+        root = tree.getroot()
+        
+        vNF = None
+        xNome = None
+        
+        for elem in root.iter():
+            if elem.tag.endswith('vNF'):
+                if vNF is None: vNF = float(elem.text)
+            elif elem.tag.endswith('xNome') and xNome is None:
+                xNome = elem.text
+                
+        if vNF is None:
+            return jsonify({"error": "Valor da nota não encontrado no XML"}), 400
+            
+        category = auto_categorize(xNome)
+        
+        return jsonify({
+            "description": xNome,
+            "amount": vNF,
+            "category": category
+        })
+    except Exception as e:
+        return jsonify({"error": f"Erro ao ler XML: {str(e)}"}), 400
+
+@app.route('/api/invoice/qrcode', methods=['POST'])
+@token_required
+def read_invoice_qrcode(current_user_id):
+    data = request.json
+    url = data.get('url')
+    if not url:
+        return jsonify({"error": "URL não fornecida"}), 400
+        
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            html = response.read().decode('utf-8', errors='ignore')
+            
+        amount = 0
+        description = "Compra (via QR Code)"
+        
+        match_nome = re.search(r'<div id="u20"[^>]*>([^<]+)</div>', html) or re.search(r'<div class="txtTopo"[^>]*>([^<]+)</div>', html) or re.search(r'<td class="nfce_emitente_nome"[^>]*>([^<]+)</td>', html)
+        if match_nome:
+            description = match_nome.group(1).strip()
+            
+        match_valor = re.search(r'<span class="totalNumb"[^>]*>([^<]+)</span>', html) or re.search(r'<span class="txtMax"[^>]*>([^<]+)</span>', html) or re.search(r'<td class="nfce_valor_total"[^>]*>([^<]+)</td>', html)
+        if match_valor:
+            val_str = match_valor.group(1).replace('.', '').replace(',', '.')
+            amount = float(val_str)
+            
+        category = auto_categorize(description)
+        
+        return jsonify({
+            "description": description,
+            "amount": amount,
+            "category": category
+        })
+    except Exception as e:
+        return jsonify({"error": f"Erro ao acessar URL da SEFAZ. Tente o XML. ({str(e)})"}), 400
+# ==========================================
+# TÉRMINO: ABA DE LEITOR DE NOTA FISCAL
+# ==========================================
 
 if __name__ == '__main__':
     app.run(port=5000)

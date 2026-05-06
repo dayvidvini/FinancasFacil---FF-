@@ -36,6 +36,9 @@
                 <a href="/relatorios" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
                 <a href="/orcamentos" class="nav-item"><i class="fa-solid fa-bullseye"></i> Orçamentos</a>
                 <a href="/projetos" class="nav-item"><i class="fa-solid fa-rocket"></i> Projetos Futuros</a>
+                <a href="/investimentos" class="nav-item"><i class="fa-solid fa-chart-line"></i> Investimentos</a>
+                <a href="/contas" class="nav-item"><i class="fa-solid fa-wallet"></i> Minhas Contas</a>
+                <a href="/cartoes" class="nav-item"><i class="fa-solid fa-credit-card"></i> Cartões de Crédito</a>
                 <a href="/configuracoes" class="nav-item"><i class="fa-solid fa-gear"></i> Configurações</a>
             </nav>
         </aside>
@@ -92,6 +95,17 @@
                 </div>
             </div>
             
+            <!-- Forecasting (Previsão de Fluxo de Caixa) -->
+            <div class="chart-card" style="margin-top: 1.5rem;">
+                <div class="chart-header">
+                    <h3>Previsão de Fluxo de Caixa <span style="font-size: 0.8rem; background: var(--accent-purple); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">AI Forecast</span></h3>
+                    <p>Estimativa de saldo para os próximos 3 meses com base na sua média de economia</p>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+
             <!-- Calendário Financeiro -->
             <div class="chart-card" style="margin-top: 1.5rem;">
                 <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
