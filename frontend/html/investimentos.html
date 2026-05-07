@@ -52,55 +52,61 @@
                         <h1 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">Meus Investimentos</h1>
                         <p style="color: var(--text-muted); font-size: 0.9rem;">Acompanhe sua carteira de ativos</p>
                     </div>
-                    <button class="btn btn-primary" onclick="toggleInvestmentForm()">
-                        <i class="fa-solid fa-plus"></i> Novo Ativo
-                    </button>
-                </div>
-
-                <div id="investmentFormContainer" style="display: none; margin-bottom: 2rem;">
-                    <div class="form-card" style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
-                        <div class="form-header">
-                            <h2><i class="fa-solid fa-chart-line" style="color:var(--primary-green)"></i> Cadastrar Ativo</h2>
-                        </div>
-                        <form id="investmentForm" onsubmit="saveInvestment(event)">
-                            <input type="hidden" id="invId" value="">
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                                <div class="input-group" style="margin: 0;">
-                                    <label>Nome do Ativo (ex: Tesouro Selic)</label>
-                                    <input type="text" id="invName" class="input-control" required>
-                                </div>
-                                <div class="input-group" style="margin: 0;">
-                                    <label>Código/Ticker (ex: BOVA11)</label>
-                                    <input type="text" id="invTicker" class="input-control">
-                                </div>
-                            </div>
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                                <div class="input-group" style="margin: 0;">
-                                    <label>Quantidade</label>
-                                    <input type="number" step="0.01" id="invQuantity" class="input-control" required>
-                                </div>
-                                <div class="input-group" style="margin: 0;">
-                                    <label>Preço Médio (R$)</label>
-                                    <input type="number" step="0.01" id="invAvgPrice" class="input-control" required>
-                                </div>
-                                <div class="input-group" style="margin: 0;">
-                                    <label>Preço Atual (R$)</label>
-                                    <input type="number" step="0.01" id="invCurPrice" class="input-control" required>
-                                </div>
-                            </div>
-
-                            <div style="display:flex; gap: 1rem;">
-                                <button type="submit" id="invSubmitBtn" class="btn btn-primary">Salvar Investimento</button>
-                                <button type="button" class="btn" style="background:#e5e7eb; color:#374151;" onclick="toggleInvestmentForm()">Cancelar</button>
-                            </div>
-                        </form>
                     </div>
                 </div>
 
-                <div id="investmentsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
-                    <!-- Preenchido via JS -->
+                <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; align-items: start; max-width: 100%;">
+                    <!-- COLUNA ESQUERDA: Formulário -->
+                    <div>
+                        <div class="form-card" id="investmentFormContainer">
+                            <div class="form-header">
+                                <h2><i class="fa-solid fa-chart-line" style="color:var(--primary-green)"></i> Cadastrar Ativo</h2>
+                                <p>Adicione um novo ativo à carteira</p>
+                            </div>
+                            <form id="investmentForm" onsubmit="saveInvestment(event)">
+                                <input type="hidden" id="invId" value="">
+                                
+                                <div class="input-group">
+                                    <label>Nome do Ativo (ex: Tesouro Selic)</label>
+                                    <input type="text" id="invName" class="input-control" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Código/Ticker (ex: BOVA11)</label>
+                                    <input type="text" id="invTicker" class="input-control">
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div class="input-group" style="margin: 0;">
+                                        <label>Quantidade</label>
+                                        <input type="number" step="0.01" id="invQuantity" class="input-control" required>
+                                    </div>
+                                    <div class="input-group" style="margin: 0;">
+                                        <label>Preço Médio (R$)</label>
+                                        <input type="number" step="0.01" id="invAvgPrice" class="input-control" required>
+                                    </div>
+                                </div>
+                                <div class="input-group" style="margin-bottom: 1.5rem;">
+                                    <label>Preço Atual (R$)</label>
+                                    <input type="number" step="0.01" id="invCurPrice" class="input-control" required>
+                                </div>
+
+                                <div style="display:flex; gap: 1rem;">
+                                    <button type="submit" id="invSubmitBtn" class="btn btn-primary">Salvar Investimento</button>
+                                    <button type="button" id="invCancelBtn" class="btn" style="display:none; background:#e5e7eb; color:#374151;" onclick="cancelInvEdit()">Cancelar Edição</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA: Tabela -->
+                    <div class="card" style="padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            <i class="fa-solid fa-list-check" style="color: var(--primary-green); margin-right: 6px;"></i> Ativos na Carteira
+                        </h3>
+                        <div id="investmentsList" style="display: flex; flex-direction: column; gap: 1rem; max-height: 600px; overflow-y: auto;">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -113,15 +119,11 @@
             loadInvestments();
         });
 
-        function toggleInvestmentForm() {
-            const form = document.getElementById('investmentFormContainer');
-            if(form.style.display === 'none') {
-                form.style.display = 'block';
-                document.getElementById('investmentForm').reset();
-                document.getElementById('invId').value = '';
-            } else {
-                form.style.display = 'none';
-            }
+        function cancelInvEdit() {
+            document.getElementById('investmentForm').reset();
+            document.getElementById('invId').value = '';
+            document.getElementById('invSubmitBtn').innerText = 'Salvar Investimento';
+            document.getElementById('invCancelBtn').style.display = 'none';
         }
 
         window.loadInvestments = async function() {
@@ -198,21 +200,21 @@
                     body: JSON.stringify({asset_name, ticker, quantity, average_price, current_price})
                 });
                 if (res.ok) {
-                    toggleInvestmentForm();
+                    cancelInvEdit();
                     loadInvestments();
                 }
             } catch(err) {}
         }
 
         window.editInvestment = function(id, name, ticker, qty, avg, cur) {
-            const form = document.getElementById('investmentFormContainer');
-            form.style.display = 'block';
             document.getElementById('invId').value = id;
             document.getElementById('invName').value = name;
             document.getElementById('invTicker').value = ticker !== 'null' ? ticker : '';
             document.getElementById('invQuantity').value = qty;
             document.getElementById('invAvgPrice').value = avg;
             document.getElementById('invCurPrice').value = cur;
+            document.getElementById('invSubmitBtn').innerText = 'Salvar Alterações';
+            document.getElementById('invCancelBtn').style.display = 'block';
         }
 
         window.deleteInvestment = async function(id) {

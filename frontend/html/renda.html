@@ -83,8 +83,9 @@
                                 <div class="input-group">
                                     <label>Conta de Destino</label>
                                     <select id="transAccount" class="input-control">
-                                        <option value="">Nenhum (Saldo Geral)</option>
-                                        <optgroup label="Contas" id="optAccounts"></optgroup>
+                                        <option value="">Renda avulsa / Prefiro não informar</option>
+                                        <optgroup label="Contas Bancárias" id="optAccounts"></optgroup>
+                                        <optgroup label="Cartões de Crédito" id="optCards" style="display:none;"></optgroup>
                                     </select>
                                 </div>
 
@@ -152,6 +153,8 @@
     <script src="/js/app.js"></script>
     <script>
         checkAuth();
+        loadTransactionOptions();
+        loadTransactions('income');
     </script>
 
     <script>

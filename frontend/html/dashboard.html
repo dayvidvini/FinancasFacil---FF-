@@ -55,38 +55,44 @@
                 </div>
 
             <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card income">
+            <div class="stats-grid" id="mainStatsGrid" style="transition: all 0.5s ease;">
+                <!-- 1: Renda -->
+                <div class="stat-card income" id="card-renda">
                     <div class="stat-title"><i class="fa-solid fa-arrow-trend-up text-green"></i> Renda Total</div>
                     <div class="stat-value text-green" id="stat-income">R$ 0,00</div>
                 </div>
-                <div class="stat-card expense">
-                    <div class="stat-title"><i class="fa-solid fa-arrow-trend-down text-red"></i> Gastos Totais</div>
+                
+                <!-- 2: Gastos -->
+                <div class="stat-card expense" id="card-gastos">
+                    <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
+                        <span><i class="fa-solid fa-arrow-trend-down text-red"></i> Gastos Totais</span>
+                        <button onclick="toggleDashboardSlider('prev')" id="btnPrevDashboard" style="display:none; background:transparent; border:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-chevron-left"></i></button>
+                    </div>
                     <div class="stat-value text-red" id="stat-expense">R$ 0,00</div>
                 </div>
-                <div class="stat-card balance">
+                
+                <!-- 3: Saldo -->
+                <div class="stat-card balance" id="card-saldo">
                     <div class="stat-title"><i class="fa-solid fa-wallet text-blue"></i> Saldo Disponível</div>
                     <div class="stat-value text-blue" id="stat-balance">R$ 0,00</div>
                 </div>
-                <div class="stat-card" style="position: relative; overflow: hidden; padding: 0; min-height: 120px;">
-                    <!-- Sugestão Diária -->
-                    <div id="carousel-sugestao" style="padding: 1.5rem; transition: transform 0.4s ease; width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-left: 4px solid var(--accent-purple); background: var(--bg-main); border-radius: 8px;">
-                        <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
-                            <span><i class="fa-solid fa-lightbulb text-purple"></i> Sugestão Diária</span>
-                            <button onclick="toggleStatCarousel()" style="background:transparent; border:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-chevron-right"></i></button>
-                        </div>
-                        <div class="stat-value text-purple" id="stat-suggestion">R$ 0,00</div>
+                
+                <!-- 4: Sugestão Diária -->
+                <div class="stat-card" id="card-sugestao" style="border-left: 4px solid var(--accent-purple);">
+                    <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
+                        <span><i class="fa-solid fa-lightbulb text-purple"></i> Sugestão Diária</span>
+                        <button onclick="toggleDashboardSlider('next')" id="btnNextDashboard" style="background:transparent; border:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
-                    
-                    <!-- Faturas de Cartão -->
-                    <div id="carousel-faturas" style="padding: 1.5rem; transition: transform 0.4s ease; transform: translateX(100%); width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-left: 4px solid #f59e0b; background: var(--bg-main); border-radius: 8px;">
-                        <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
-                            <button onclick="toggleStatCarousel()" style="background:transparent; border:none; cursor:pointer; color:var(--text-muted); margin-right: 5px;"><i class="fa-solid fa-chevron-left"></i></button>
-                            <span style="flex:1"><i class="fa-solid fa-credit-card" style="color:#f59e0b;"></i> Faturas</span>
-                        </div>
-                        <div class="stat-value" id="stat-credit-cards" style="color:#f59e0b;">R$ 0,00</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Total Limite: <span id="stat-cc-limit">R$ 0,00</span></div>
+                    <div class="stat-value text-purple" id="stat-suggestion">R$ 0,00</div>
+                </div>
+                
+                <!-- 5: Faturas de Cartão (Oculto Inicialmente) -->
+                <div class="stat-card" id="card-faturas" style="display:none; border-left: 4px solid #f59e0b;">
+                    <div class="stat-title">
+                        <i class="fa-solid fa-credit-card" style="color:#f59e0b;"></i> Faturas
                     </div>
+                    <div class="stat-value" id="stat-credit-cards" style="color:#f59e0b;">R$ 0,00</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Total Limite: <span id="stat-cc-limit">R$ 0,00</span></div>
                 </div>
             </div>
 
@@ -160,20 +166,6 @@
     <script src="/js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', loadDashboard);
-        
-        let showingSuggestion = true;
-        function toggleStatCarousel() {
-            const sug = document.getElementById('carousel-sugestao');
-            const fat = document.getElementById('carousel-faturas');
-            if (showingSuggestion) {
-                sug.style.transform = 'translateX(-100%)';
-                fat.style.transform = 'translateX(0)';
-            } else {
-                sug.style.transform = 'translateX(0)';
-                fat.style.transform = 'translateX(100%)';
-            }
-            showingSuggestion = !showingSuggestion;
-        }
     </script>
     <script>
       if ('serviceWorker' in navigator) {

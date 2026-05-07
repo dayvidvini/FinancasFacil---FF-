@@ -108,12 +108,17 @@
                                 </div>
 
                                 <div class="input-group">
-                                    <label>Conta ou Cartão</label>
+                                    <label>Conta de Destino / Pagamento</label>
                                     <select id="transAccount" class="input-control">
-                                        <option value="">Nenhum (Saldo Geral)</option>
-                                        <optgroup label="Contas" id="optAccounts"></optgroup>
+                                        <option value="">Gasto avulso / Prefiro não informar</option>
+                                        <optgroup label="Contas Bancárias" id="optAccounts"></optgroup>
                                         <optgroup label="Cartões de Crédito" id="optCards"></optgroup>
                                     </select>
+                                </div>
+                                
+                                <div class="input-group" style="margin-bottom: 1.5rem;">
+                                    <label>Anexar Comprovante / PDF (Opcional)</label>
+                                    <input type="file" id="transPdf" class="input-control" accept=".pdf,image/*">
                                 </div>
 
                                 <div class="input-group">
@@ -222,6 +227,8 @@
     <script src="/js/app.js"></script>
     <script>
         checkAuth();
+        loadTransactionOptions();
+        loadTransactions('expense');
         function selectCat(val, el) {
             document.getElementById('transCat').value = val;
             document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));

@@ -173,6 +173,14 @@ def init_db():
     except: pass
     try: c.execute("ALTER TABLE transactions ADD COLUMN category_id INTEGER")
     except: pass
+    try: c.execute("ALTER TABLE transactions ADD COLUMN pdf_url TEXT")
+    except: pass
+
+    # Alterar accounts e credit_cards para novos campos
+    try: c.execute("ALTER TABLE accounts ADD COLUMN color TEXT DEFAULT '#4f46e5'")
+    except: pass
+    try: c.execute("ALTER TABLE credit_cards ADD COLUMN color TEXT DEFAULT '#e11d48'")
+    except: pass
 
     conn.commit()
     conn.close()
@@ -448,8 +456,8 @@ def create_transaction(current_user_id):
         date_val = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     c.execute('''INSERT INTO transactions
-        (user_id, type, description, amount, category, frequency, payment_day, date, account_id, credit_card_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (user_id, type, description, amount, category, frequency, payment_day, date, account_id, credit_card_id, pdf_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         (
             current_user_id,
             data['type'],
@@ -460,9 +468,19 @@ def create_transaction(current_user_id):
             data.get('payment_day'),
             date_val,
             data.get('account_id'),
-            data.get('credit_card_id')
+            data.get('credit_card_id'),
+            data.get('pdf_url')
         )
     )
+    
+    # Atualizar saldo da conta, se aplicável
+    if data.get('account_id'):
+        amount = float(data['amount'])
+        if data['type'] == 'expense':
+            c.execute("UPDATE accounts SET balance = balance - ? WHERE id = ? AND user_id = ?", (amount, data['account_id'], current_user_id))
+        elif data['type'] == 'income':
+            c.execute("UPDATE accounts SET balance = balance + ? WHERE id = ? AND user_id = ?", (amount, data['account_id'], current_user_id))
+
     conn.commit()
     conn.close()
     return jsonify({"message": "Criado"})
@@ -820,6 +838,30 @@ def delete_investment(current_user_id, inv_id):
     conn.close()
     return jsonify({"message": "Investimento deletado"})
 
+
+@app.route('/api/upload', methods=['POST'])
+@token_required
+def upload_file(current_user_id):
+    if 'file' not in request.files:
+        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "Nenhum arquivo selecionado"}), 400
+        
+    if file:
+        # Verifica se diretório de uploads existe
+        upload_folder = os.path.join('frontend', 'uploads')
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+            
+        filename = f"{current_user_id}_{int(datetime.datetime.now().timestamp())}_{file.filename}"
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+        
+        return jsonify({"url": f"/uploads/{filename}"})
+    
+    return jsonify({"error": "Erro no upload"}), 500
 
 @app.route('/api/shared_access', methods=['POST'])
 @token_required

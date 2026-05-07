@@ -21,16 +21,22 @@
     --danger-red-hover: #e11d48;
     --accent-blue: #3b82f6; /* Azul do saldo */
     --accent-purple: #8b5cf6; /* Roxo para as sugestões e projetos */
+    --input-bg: #f9fafb;
+    --input-bg-focus: #ffffff;
+    --bg-body: #f3f4f6;
 }
 
 /* Tema Escuro Dinâmico */
 body.dark-theme {
-    --bg-color: #121826;
+    --bg-color: #0f172a; /* Mais escuro */
     --card-bg: #1e293b;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --border-color: #334155;
-    /* Reduz a força da sombra dos cartões no dark mode */
+    --input-bg: #0f172a;
+    --input-bg-focus: #1e293b;
+    --bg-body: #1e293b;
+    --bg-main: #1e293b;
     box-shadow: none;
 }
 
@@ -106,18 +112,19 @@ a { text-decoration: none; color: inherit; }
     padding: 0.75rem 1rem;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    background-color: #f9fafb;
+    background-color: var(--input-bg);
+    color: var(--text-main);
     font-size: 0.875rem;
     transition: border-color 0.2s;
 }
 .input-control:focus {
     border-color: var(--primary-green);
     outline: none;
-    background-color: #fff;
+    background-color: var(--input-bg-focus);
     box-shadow: 0 0 0 3px rgba(0, 195, 123, 0.1);
 }
 .input-control:read-only {
-    background-color: #f3f4f6;
+    background-color: var(--border-color);
     color: var(--text-muted);
     cursor: default;
     opacity: 0.8;
@@ -485,6 +492,10 @@ body.dark-theme .cal-day.today {
         flex-direction: column !important;
     }
     div[style*="1fr 1fr"] {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    div[style*="1fr 2fr"] {
         display: flex !important;
         flex-direction: column !important;
     }

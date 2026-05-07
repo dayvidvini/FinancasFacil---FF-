@@ -144,6 +144,24 @@ async function submitTransaction(e, type) {
         category = 'Renda';
     }
     
+    // Upload de PDF opcional
+    let pdf_url = null;
+    const transPdfEl = document.getElementById('transPdf');
+    if(transPdfEl && transPdfEl.files && transPdfEl.files[0]) {
+        try {
+            const formData = new FormData();
+            formData.append('file', transPdfEl.files[0]);
+            const token = localStorage.getItem('ff_token');
+            const uploadRes = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if(uploadRes.ok) pdf_url = uploadData.url;
+        } catch(e) { console.error("Erro upload", e); }
+    }
+    
     let account_id = null;
     let credit_card_id = null;
     const transAccountEl = document.getElementById('transAccount');
@@ -153,6 +171,8 @@ async function submitTransaction(e, type) {
         if(val.startsWith('card_')) credit_card_id = parseInt(val.replace('card_', ''));
     }
     
+    const url = transId ? `${API_URL}/transactions/${transId}` : `${API_URL}/transactions`;
+    const method = transId ? 'PUT' : 'POST';
     if (frequency === 'Quinzenal' && !transId) {
         const quinzenalType = document.getElementById('transQuinzenalType').value;
         const day1 = parseInt(payment_day);
@@ -198,7 +218,7 @@ async function submitTransaction(e, type) {
         const res = await apiFetch(url, {
             method: method,
             
-            body: JSON.stringify({user_id, type, description, amount, category, frequency, payment_day, account_id, credit_card_id})
+            body: JSON.stringify({user_id, type, description, amount, category, frequency, payment_day, account_id, credit_card_id, pdf_url})
         });
         
         if (res.ok) {
@@ -235,6 +255,7 @@ async function loadTransactions(type) {
         
         rows.forEach(t => {
             let info = type === 'income' ? `Frequência: ${t.frequency} | Venc.: Dia ${t.payment_day || '--'}` : `Categoria: ${t.category} | Venc.: Dia ${t.payment_day || '--'}`;
+            let pdfBtn = t.pdf_url ? `<button class="btn" style="background:transparent; border:1px solid #e5e7eb; color:#8b5cf6; padding:0.4rem 0.8rem; width:auto;" onclick="openPdfModal('${API_URL.replace('/api','')}${t.pdf_url}')" title="Ver Comprovante"><i class="fa-solid fa-file-pdf"></i></button>` : '';
             listEl.innerHTML += `
             <div style="display:flex; justify-content:space-between; align-items:center; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; background: #fff;">
                 <div>
@@ -243,6 +264,7 @@ async function loadTransactions(type) {
                     <strong style="color: ${type === 'income' ? '#00c37b' : '#f43f5e'};">R$ ${parseFloat(t.amount).toFixed(2)}</strong>
                 </div>
                 <div style="display:flex; gap: 8px;">
+                    ${pdfBtn}
                     <button class="btn" style="background:transparent; border:1px solid #e5e7eb; color:#3b82f6; padding:0.4rem 0.8rem; width:auto;" onclick="editTransaction('${t.id}', '${t.description}', '${t.amount}', '${t.category}', '${t.frequency}', '${t.payment_day}')">
                         <i class="fa-solid fa-pen"></i>
                     </button>
@@ -255,6 +277,28 @@ async function loadTransactions(type) {
     } catch(err) {
         listEl.innerHTML = `<div style="text-align:center; color: red;">Erro ao carregar lista.</div>`;
     }
+}
+
+// Modal Global de PDF
+window.openPdfModal = function(url) {
+    let modal = document.getElementById('globalPdfModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'globalPdfModal';
+        modal.style.cssText = 'display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:2rem;';
+        modal.innerHTML = `
+            <div style="background:#fff; width:100%; max-width:800px; height:90vh; border-radius:12px; display:flex; flex-direction:column; overflow:hidden;">
+                <div style="padding:1rem; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0;"><i class="fa-solid fa-file-pdf" style="color:#8b5cf6;"></i> Visualizador de Comprovante</h3>
+                    <button onclick="document.getElementById('globalPdfModal').style.display='none'" style="background:transparent; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <iframe id="globalPdfIframe" style="flex:1; width:100%; border:none;"></iframe>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    document.getElementById('globalPdfIframe').src = url;
+    modal.style.display = 'flex';
 }
 
 window.handleFreqChange = function() {
@@ -651,6 +695,27 @@ async function loadDashboard() {
             if(document.getElementById('stat-balance')) document.getElementById('stat-balance').innerText = `R$ ${summary.balance.toFixed(2).replace('.', ',')}`;
             if(document.getElementById('stat-suggestion')) document.getElementById('stat-suggestion').innerText = `R$ ${summary.daily_suggestion.toFixed(2).replace('.', ',')}`;
             
+            // Faturas de Cartão
+            if(document.getElementById('stat-credit-cards')) {
+                let faturasTotal = 0;
+                data.transactions.forEach(t => {
+                    if (t.type === 'expense' && t.credit_card_id) {
+                        faturasTotal += t.amount;
+                    }
+                });
+                document.getElementById('stat-credit-cards').innerText = `R$ ${faturasTotal.toFixed(2).replace('.', ',')}`;
+                
+                // Buscar limites
+                try {
+                    const resCards = await apiFetch(`${API_URL}/credit_cards/${user_id}`);
+                    if (resCards.ok) {
+                        const cards = await resCards.json();
+                        let limitTotal = cards.reduce((acc, c) => acc + c.limit_amount, 0);
+                        if(document.getElementById('stat-cc-limit')) document.getElementById('stat-cc-limit').innerText = `R$ ${limitTotal.toFixed(2).replace('.', ',')}`;
+                    }
+                } catch(e) { console.error(e) }
+            }
+            
             // Chama a renderização dos charts mandando os dados calculados
             renderCharts(data.analytics); 
             if(document.getElementById('calendarGrid')) {
@@ -1032,6 +1097,102 @@ function renderCalendar(transactions) {
     
     grid.innerHTML = html;
 }
+// =====================================
+// SESSÃO DE BOLETOS
+// =====================================
+window.loadBoletos = async function() {
+    const listEl = document.getElementById('boletosList');
+    if(!listEl) return;
+    const user_id = getCurrentUserId();
+    
+    try {
+        const res = await apiFetch(`${API_URL}/boletos/${user_id}`);
+        const rows = await res.json();
+        
+        listEl.innerHTML = "";
+        if (!res.ok) throw new Error(rows.error || "Erro ao carregar");
+        if(rows.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem;">Você não tem boletos cadastrados.</div>`;
+            return;
+        }
+        
+        rows.forEach(b => {
+            const isPaid = b.status === 'paid';
+            const statusColor = isPaid ? 'var(--primary-green)' : '#f59e0b'; // verde ou laranja
+            const statusText = isPaid ? 'Pago' : 'Pendente';
+            
+            listEl.innerHTML += `
+            <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-left: 4px solid ${statusColor}; border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+                <div style="display:flex; justify-content: space-between; align-items:flex-start;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); text-decoration: ${isPaid ? 'line-through' : 'none'}; opacity: ${isPaid ? '0.6' : '1'};">${b.title}</h3>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Vence em: ${b.due_date.split('-').reverse().join('/')}</p>
+                    </div>
+                    <div>
+                        <strong style="font-size: 1.2rem; color: var(--text-main);">R$ ${b.amount.toFixed(2)}</strong>
+                    </div>
+                </div>
+                
+                ${b.barcode ? `<div style="font-size: 0.8rem; background: var(--bg-body); padding: 5px; border-radius: 4px; word-break: break-all; color: var(--text-muted);"><i class="fa-solid fa-barcode"></i> ${b.barcode}</div>` : ''}
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <span style="font-size: 0.8rem; font-weight: 600; color: ${statusColor};">${statusText}</span>
+                    <div style="display:flex; gap: 10px;">
+                        ${!isPaid ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="payBoleto('${b.id}')"><i class="fa-solid fa-check"></i> Pagar</button>` : ''}
+                        <button class="btn" style="background:transparent; color:#fca5a5; padding:0; border:none;" onclick="deleteBoleto('${b.id}')"><i class="fa-solid fa-trash" style="font-size: 1.1rem;"></i></button>
+                    </div>
+                </div>
+            </div>`;
+        });
+    } catch(err) {
+        listEl.innerHTML = `<div style="text-align:center; color: red;">Erro ao carregar boletos.</div>`;
+    }
+}
+
+window.saveBoleto = async function(e) {
+    e.preventDefault();
+    const title = document.getElementById('bolTitle').value;
+    const amount = parseFloat(document.getElementById('bolAmount').value);
+    const due_date = document.getElementById('bolDueDate').value;
+    const barcode = document.getElementById('bolBarcode').value;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/boletos`, {
+            method: 'POST',
+            body: JSON.stringify({title, amount, due_date, barcode})
+        });
+        
+        if (res.ok) {
+            document.getElementById('boletoForm').reset();
+            loadBoletos();
+        } else alert("Erro ao salvar boleto");
+    } catch(err) {
+        alert("Erro na rede.");
+    }
+}
+
+window.payBoleto = async function(id) {
+    if(!confirm("Marcar este boleto como pago? Isso criará um Gasto na sua conta automaticamente.")) return;
+    try {
+        const res = await apiFetch(`${API_URL}/boletos/${id}/pay`, { method: 'PUT' });
+        if(res.ok) {
+            alert("Boleto pago com sucesso!");
+            loadBoletos();
+        } else {
+            alert("Erro ao marcar como pago.");
+        }
+    } catch(er) { alert("Falha na rede.") }
+}
+
+window.deleteBoleto = async function(id) {
+    if(!confirm("Excluir este boleto?")) return;
+    try {
+        const res = await apiFetch(`${API_URL}/boletos/${id}`, { method: 'DELETE' });
+        if(res.ok) loadBoletos();
+        else alert("Erro ao excluir.");
+    } catch(er) { alert("Falha na rede.") }
+}
+
 // =====================================
 // SESSÃO DE CONTAS (ACCOUNTS)
 // =====================================
@@ -1642,3 +1803,24 @@ window.submitSalaryWizard = async function(e) {
         alert('Erro ao configurar salário automático.');
     }
 }
+
+
+// =====================================
+// CARROSSEL DO DASHBOARD
+// =====================================
+window.toggleDashboardSlider = function(direction) {
+    const cards = document.querySelectorAll('.stats-grid .stat-card');
+    if(cards.length < 5) return;
+    if(direction === 'next') {
+        cards[0].style.display = 'none';
+        cards[4].style.display = 'block';
+        document.getElementById('btnNextDashboard').style.display = 'none';
+        document.getElementById('btnPrevDashboard').style.display = 'block';
+    } else {
+        cards[0].style.display = 'block';
+        cards[4].style.display = 'none';
+        document.getElementById('btnNextDashboard').style.display = 'block';
+        document.getElementById('btnPrevDashboard').style.display = 'none';
+    }
+}
+
