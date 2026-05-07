@@ -63,12 +63,14 @@
                 </div>
                 
                 <!-- 2: Gastos -->
-                <div class="stat-card expense" id="card-gastos">
-                    <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
-                        <span><i class="fa-solid fa-arrow-trend-down text-red"></i> Gastos Totais</span>
-                        <button onclick="toggleDashboardSlider('prev')" id="btnPrevDashboard" style="display:none; background:transparent; border:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-chevron-left"></i></button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button onclick="toggleDashboardSlider('prev')" id="btnPrevDashboard" style="display:none; background:transparent; border:none; cursor:pointer; color:var(--text-muted); font-size:1.2rem; padding: 0 4px;"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="stat-card expense" id="card-gastos" style="flex: 1; width: 100%;">
+                        <div class="stat-title">
+                            <span><i class="fa-solid fa-arrow-trend-down text-red"></i> Gastos Totais</span>
+                        </div>
+                        <div class="stat-value text-red" id="stat-expense">R$ 0,00</div>
                     </div>
-                    <div class="stat-value text-red" id="stat-expense">R$ 0,00</div>
                 </div>
                 
                 <!-- 3: Saldo -->
@@ -78,12 +80,14 @@
                 </div>
                 
                 <!-- 4: Sugestão Diária -->
-                <div class="stat-card" id="card-sugestao" style="border-left: 4px solid var(--accent-purple);">
-                    <div class="stat-title" style="display:flex; justify-content:space-between; width:100%;">
-                        <span><i class="fa-solid fa-lightbulb text-purple"></i> Sugestão Diária</span>
-                        <button onclick="toggleDashboardSlider('next')" id="btnNextDashboard" style="background:transparent; border:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-chevron-right"></i></button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="stat-card" id="card-sugestao" style="border-left: 4px solid var(--accent-purple); flex: 1; width: 100%;">
+                        <div class="stat-title">
+                            <span><i class="fa-solid fa-lightbulb text-purple"></i> Sugestão Diária</span>
+                        </div>
+                        <div class="stat-value text-purple" id="stat-suggestion">R$ 0,00</div>
                     </div>
-                    <div class="stat-value text-purple" id="stat-suggestion">R$ 0,00</div>
+                    <button onclick="toggleDashboardSlider('next')" id="btnNextDashboard" style="background:transparent; border:none; cursor:pointer; color:var(--text-muted); font-size:1.2rem; padding: 0 4px;"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
                 
                 <!-- 5: Faturas de Cartão (Oculto Inicialmente) -->

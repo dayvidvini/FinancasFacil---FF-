@@ -265,6 +265,10 @@ def css(filename):
 def js(filename):
     return send_from_directory(os.path.join(FRONTEND_PATH, 'js'), filename)
 
+@app.route('/uploads/<path:filename>')
+def uploads(filename):
+    return send_from_directory(os.path.join(FRONTEND_PATH, 'uploads'), filename)
+
 @app.route('/manifest.json')
 def manifest():
     return send_from_directory(FRONTEND_PATH, 'manifest.json')

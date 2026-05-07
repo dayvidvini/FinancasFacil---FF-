@@ -1214,18 +1214,20 @@ window.loadAccounts = async function() {
         
         rows.forEach(a => {
             listEl.innerHTML += `
-            <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: ${a.color}"></div>
+            <div style="background: ${a.color || 'var(--primary-color)'}; border-radius: 12px; padding: 1.5rem; color: white; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-height: 160px;">
                 <div style="display:flex; justify-content: space-between; align-items:flex-start;">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">${a.name}</h3>
-                        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">${a.type}</p>
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600;">${a.name}</h3>
+                        <p style="margin: 0; font-size: 0.8rem; opacity: 0.8;">${a.type}</p>
                     </div>
-                    <button class="btn" style="background:transparent; color:#fca5a5; padding:0; border:none;" onclick="deleteAccount('${a.id}')"><i class="fa-solid fa-trash" style="font-size: 1rem;"></i></button>
+                    <button class="btn" style="background:rgba(255,255,255,0.2); color:white; padding: 6px 10px; border:none; width: auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="deleteAccount('${a.id}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
-                <div style="margin-top: 1.5rem;">
-                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Saldo Atual</p>
-                    <strong style="font-size: 1.5rem; color: ${a.balance >= 0 ? 'var(--primary-green)' : 'var(--danger-red)'};">R$ ${a.balance.toFixed(2)}</strong>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.8;">Saldo Atual</p>
+                        <strong style="font-size: 1.2rem;">R$ ${a.balance.toFixed(2)}</strong>
+                    </div>
+                    <i class="fa-solid fa-wallet" style="font-size: 2rem; opacity: 0.7;"></i>
                 </div>
             </div>`;
         });
@@ -1352,9 +1354,13 @@ window.loadTransactionOptions = async function() {
             if(resA.ok) {
                 const accs = await resA.json();
                 optAccounts.innerHTML = '';
-                accs.forEach(a => {
-                    optAccounts.innerHTML += `<option value="acc_${a.id}">${a.name} (R$ ${a.balance.toFixed(2)})</option>`;
-                });
+                if (accs.length === 0) {
+                    optAccounts.innerHTML = '<option disabled>Nenhuma conta cadastrada</option>';
+                } else {
+                    accs.forEach(a => {
+                        optAccounts.innerHTML += `<option value="acc_${a.id}">${a.name} (R$ ${a.balance.toFixed(2)})</option>`;
+                    });
+                }
             }
         }
         
@@ -1363,9 +1369,13 @@ window.loadTransactionOptions = async function() {
             if(resC.ok) {
                 const cards = await resC.json();
                 optCards.innerHTML = '';
-                cards.forEach(c => {
-                    optCards.innerHTML += `<option value="card_${c.id}">${c.name} (L: R$ ${c.limit_amount.toFixed(2)})</option>`;
-                });
+                if (cards.length === 0) {
+                    optCards.innerHTML = '<option disabled>Nenhum cartão cadastrado</option>';
+                } else {
+                    cards.forEach(c => {
+                        optCards.innerHTML += `<option value="card_${c.id}">${c.name} (L: R$ ${c.limit_amount.toFixed(2)})</option>`;
+                    });
+                }
             }
         }
     } catch(err) { console.error(err); }
