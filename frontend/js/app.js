@@ -744,7 +744,7 @@ async function loadDashboard() {
                         
                         // Busca transações para calcular a fatura atual (todas despesas vinculadas a cartões no mes atual)
                         const thisMonthStr = new Date().toISOString().slice(0, 7);
-                        const ccExpenses = data.transactions.filter(t => t.type === 'expense' && t.date.startsWith(thisMonthStr) && t.account_id && cards.find(c => c.id == t.account_id));
+                        const ccExpenses = data.transactions.filter(t => t.type === 'expense' && t.date && t.date.startsWith(thisMonthStr) && t.credit_card_id && cards.find(c => c.id == t.credit_card_id));
                         ccExpenses.forEach(t => totalInvoice += parseFloat(t.amount));
 
                         if(document.getElementById('stat-credit-cards')) document.getElementById('stat-credit-cards').innerText = `R$ ${totalInvoice.toFixed(2).replace('.', ',')}`;
@@ -1279,6 +1279,13 @@ window.loadCreditCards = async function() {
         const res = await apiFetch(`${API_URL}/credit_cards/${user_id}`);
         const rows = await res.json();
         
+        const resTrans = await apiFetch(`${API_URL}/transactions/${user_id}?type=expense`);
+        let expenses = [];
+        if(resTrans.ok) {
+            expenses = await resTrans.json();
+        }
+        const thisMonthStr = new Date().toISOString().slice(0, 7);
+        
         listEl.innerHTML = "";
         if (!res.ok) throw new Error(rows.error || "Erro ao carregar");
         if(rows.length === 0) {
@@ -1287,6 +1294,10 @@ window.loadCreditCards = async function() {
         }
         
         rows.forEach(c => {
+            let invoiceTotal = 0;
+            const cardExpenses = expenses.filter(t => t.credit_card_id == c.id && t.date && t.date.startsWith(thisMonthStr));
+            cardExpenses.forEach(t => invoiceTotal += parseFloat(t.amount));
+
             listEl.innerHTML += `
             <div style="background: ${c.color}; border-radius: 12px; padding: 1.5rem; color: white; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-height: 160px;">
                 <div style="display:flex; justify-content: space-between; align-items:flex-start;">
@@ -1298,8 +1309,9 @@ window.loadCreditCards = async function() {
                 </div>
                 <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
                     <div>
-                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.8;">Limite Total</p>
-                        <strong style="font-size: 1.2rem;">R$ ${c.limit_amount.toFixed(2)}</strong>
+                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.8;">Fatura Atual</p>
+                        <strong style="font-size: 1.2rem;">R$ ${invoiceTotal.toFixed(2)}</strong>
+                        <p style="margin: 0; font-size: 0.75rem; opacity: 0.7; margin-top: 2px;">Limite: R$ ${c.limit_amount.toFixed(2)}</p>
                     </div>
                     <i class="fa-brands fa-cc-visa" style="font-size: 2rem; opacity: 0.7;"></i>
                 </div>
