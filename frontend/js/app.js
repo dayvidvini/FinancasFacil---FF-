@@ -140,6 +140,17 @@ async function submitTransaction(e, type) {
     
     if(type === 'expense') {
         category = document.getElementById('transCat').value;
+        if(category === 'Outros') {
+            const customName = document.getElementById('customCatName').value;
+            if(customName.trim() !== '') {
+                category = customName.trim();
+                // Optionally save to API directly
+                apiFetch(`${API_URL}/categories`, {
+                    method: 'POST',
+                    body: JSON.stringify({name: category, type: 'expense', color: '#6b7280', icon: 'fa-tag'})
+                }).catch(e=>console.log(e));
+            }
+        }
     } else {
         category = 'Renda';
     }
@@ -753,6 +764,44 @@ async function loadDashboard() {
                     }
                 } catch(e) { console.error("Erro fetch cards", e); }
             }
+            
+            // --- Gamificação e Conquistas ---
+            if(document.getElementById('achievementsGrid')) {
+                // 1. Mão de Vaca: total_expense < total_income e income > 0
+                if (summary.total_income > 0 && summary.total_expenses < summary.total_income) {
+                    document.getElementById('badge-mao-de-vaca').classList.remove('locked');
+                    document.getElementById('badge-mao-de-vaca').classList.add('unlocked');
+                } else {
+                    document.getElementById('badge-mao-de-vaca').classList.remove('unlocked');
+                    document.getElementById('badge-mao-de-vaca').classList.add('locked');
+                }
+
+                // 2. Investidor: Guardou 20% da renda no mês
+                if (summary.total_income > 0 && summary.total_expenses <= (summary.total_income * 0.8)) {
+                    document.getElementById('badge-investidor').classList.remove('locked');
+                    document.getElementById('badge-investidor').classList.add('unlocked');
+                } else {
+                    document.getElementById('badge-investidor').classList.remove('unlocked');
+                    document.getElementById('badge-investidor').classList.add('locked');
+                }
+                
+                // 3. Visionário: Possui pelo menos um Projeto
+                try {
+                    const resProj = await apiFetch(`${API_URL}/projects/${user_id}`);
+                    if (resProj.ok) {
+                        const projects = await resProj.json();
+                        if (projects.length > 0) {
+                            document.getElementById('badge-visionario').classList.remove('locked');
+                            document.getElementById('badge-visionario').classList.add('unlocked');
+                        } else {
+                            document.getElementById('badge-visionario').classList.remove('unlocked');
+                            document.getElementById('badge-visionario').classList.add('locked');
+                        }
+                    }
+                } catch(e) { console.error("Erro fetch projetos conquistas", e); }
+            }
+            // --------------------------------
+
         }
     } catch(err) {
         console.error("Erro ao carregar dashboard", err);
@@ -1844,5 +1893,130 @@ window.toggleDashboardSlider = function(direction) {
         document.getElementById('btnNextDashboard').style.display = 'block';
         document.getElementById('btnPrevDashboard').style.display = 'none';
     }
+}
+
+
+// =====================================
+// SESSO DE CATEGORIAS CUSTOMIZADAS
+// =====================================
+
+async function loadCategories() {
+    const listEl = document.getElementById("categoriesList");
+    if(!listEl) return;
+    const user_id = getCurrentUserId();
+    
+    try {
+        const res = await apiFetch(`${API_URL}/categories/${user_id}`);
+        const rows = await res.json();
+        
+        listEl.innerHTML = "";
+        if (!res.ok) throw new Error("Erro ao carregar");
+        if(rows.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; color: var(--text-muted); padding: 2rem;">Voc ainda no criou categorias customizadas.</div>`;
+            return;
+        }
+        
+        rows.forEach(c => {
+            const iconColor = c.type === "expense" ? "var(--danger-red)" : "var(--primary-green)";
+            listEl.innerHTML += `
+            <div style="background: var(--card-bg); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: ${c.color}20; color: ${c.color}; font-size: 1.2rem;">
+                        <i class="fa-solid ${c.icon}"></i>
+                    </div>
+                    <div>
+                        <strong style="color: var(--text-main); display: block;">${c.name}</strong>
+                        <small style="color: var(--text-muted);">${c.type === "expense" ? "Gasto" : "Renda"}</small>
+                    </div>
+                </div>
+                <button class="btn" style="background: rgba(244, 63, 94, 0.1); color: var(--danger-red); width: auto; padding: 6px 12px;" onclick="deleteCategory(${c.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>`;
+        });
+    } catch(err) {
+        listEl.innerHTML = `<div style="text-align:center; color: red;">Erro ao carregar categorias.</div>`;
+    }
+}
+
+async function saveCategory(e) {
+    e.preventDefault();
+    const user_id = getCurrentUserId();
+    const name = document.getElementById("catName").value;
+    const type = document.getElementById("catType").value;
+    const color = document.getElementById("catColor").value;
+    
+    try {
+        const res = await apiFetch(`${API_URL}/categories`, {
+            method: "POST",
+            body: JSON.stringify({ name, type, color, icon: "fa-tag" })
+        });
+        if (res.ok) {
+            alert("Categoria cadastrada com sucesso!");
+            e.target.reset();
+            loadCategories();
+        } else {
+            alert("Erro ao cadastrar.");
+        }
+    } catch (err) {
+        alert("Falha na rede.");
+    }
+}
+
+async function deleteCategory(id) {
+    if(!confirm("Excluir categoria permanentemente? (Isso no altera transaes j salvas com esse nome)")) return;
+    try {
+        const res = await apiFetch(`${API_URL}/categories/${id}`, { method: "DELETE" });
+        if(res.ok) loadCategories();
+        else alert("Erro ao excluir.");
+    } catch(er) { alert("Falha na rede."); }
+}
+
+async function loadCategoriesOptions(type = "expense") {
+    const user_id = getCurrentUserId();
+    try {
+        const res = await apiFetch(`${API_URL}/categories/${user_id}`);
+        if(res.ok) {
+            const rows = await res.json();
+            const filtered = rows.filter(r => r.type === type);
+            
+            const selectEl = document.getElementById("transCat");
+            const gridEl = document.getElementById("catGrid");
+            
+            if(selectEl) {
+                // Remove existing custom options before "Outros" to avoid duplicates if re-rendered
+                const currentOptions = Array.from(selectEl.options);
+                const defaultVals = ["Alimentao", "Transporte", "Moradia", "Lazer", "Contas", "Compras", "Outros"];
+                currentOptions.forEach(opt => {
+                    if(!defaultVals.includes(opt.value)) opt.remove();
+                });
+                
+                // Insert before the last element (Outros)
+                const lastOption = selectEl.options[selectEl.options.length - 1];
+                filtered.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c.name;
+                    opt.text = c.name;
+                    selectEl.insertBefore(opt, lastOption);
+                });
+            }
+            
+            if(gridEl) {
+                // Remove custom items before appending
+                const currentItems = Array.from(gridEl.querySelectorAll(".category-item.custom-cat"));
+                currentItems.forEach(i => i.remove());
+                
+                // Get the "Outros" item
+                const outrosItem = gridEl.lastElementChild;
+                
+                filtered.forEach(c => {
+                    const div = document.createElement("div");
+                    div.className = "category-item custom-cat";
+                    div.dataset.val = c.name;
+                    div.onclick = function() { selectCat(c.name, this); };
+                    div.innerHTML = `<i class="fa-solid ${c.icon}" style="color:${c.color}"></i><span>${c.name}</span>`;
+                    gridEl.insertBefore(div, outrosItem);
+                });
+            }
+        }
+    } catch(e) {}
 }
 

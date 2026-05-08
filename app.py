@@ -119,6 +119,16 @@ def init_db():
         UNIQUE(user_id, category)
     )''')
 
+    # Tabela Categories
+    c.execute('''CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT,
+        type TEXT,
+        color TEXT,
+        icon TEXT DEFAULT 'fa-tag'
+    )''')
+
     # Novas tabelas para Expansão
     c.execute('''CREATE TABLE IF NOT EXISTS accounts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,15 +147,6 @@ def init_db():
         closing_day INTEGER,
         due_day INTEGER,
         color TEXT DEFAULT '#e11d48'
-    )''')
-
-    c.execute('''CREATE TABLE IF NOT EXISTS categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        name TEXT,
-        type TEXT,
-        color TEXT DEFAULT '#10b981',
-        icon TEXT DEFAULT 'fas fa-tag'
     )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS investments (
@@ -1123,5 +1124,11 @@ def read_invoice_qrcode(current_user_id):
 # TÉRMINO: ABA DE LEITOR DE NOTA FISCAL
 # ==========================================
 
+@app.route('/api/cartoes', methods=['POST'])
+def save_cartao():
+    # Isso pode estar sendo chamado incorretamente do app.js original. 
+    # A rota correta para adicionar cartao é /api/credit_cards/<int:user_id> (método POST)
+    pass
+
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=5000)

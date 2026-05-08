@@ -130,7 +130,13 @@
                                         <option value="Lazer">Lazer</option>
                                         <option value="Contas">Contas</option>
                                         <option value="Compras">Compras</option>
+                                        <!-- O app.js vai injetar as categorias customizadas aqui -->
+                                        <option value="Outros">Outros (Nova Categoria)</option>
                                     </select>
+                                </div>
+                                <div class="input-group" id="customCatDiv" style="display:none; margin-bottom: 1.5rem;">
+                                    <label>Nome da Nova Categoria</label>
+                                    <input type="text" id="customCatName" class="input-control" placeholder="Digite o nome...">
                                 </div>
 
                                 <div class="category-grid" id="catGrid" style="margin-bottom: 2rem;">
@@ -157,6 +163,10 @@
                                     <div class="category-item" onclick="selectCat('Compras', this)">
                                         <i class="fa-solid fa-bag-shopping" style="color:#10b981"></i>
                                         <span>Compras</span>
+                                    </div>
+                                    <div class="category-item" onclick="selectCat('Outros', this)">
+                                        <i class="fa-solid fa-plus" style="color:#6b7280"></i>
+                                        <span>Outros</span>
                                     </div>
                                 </div>
 
@@ -229,18 +239,39 @@
         checkAuth();
         loadTransactionOptions();
         loadTransactions('expense');
+        
+        async function initGasto() {
+            // Se tiver customCategories() no app.js, vamos chamar para adicionar nas options.
+            if(typeof loadCategoriesOptions === 'function') {
+                await loadCategoriesOptions('expense');
+            }
+        }
+        initGasto();
+
         function selectCat(val, el) {
             document.getElementById('transCat').value = val;
             document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
+            if(el) el.classList.add('active');
+            updateCatGrid();
         }
         function updateCatGrid() {
             let val = document.getElementById('transCat').value;
             let items = document.querySelectorAll('.category-item');
             items.forEach(i => {
                 i.classList.remove('active');
-                if (i.querySelector('span').innerText === val) i.classList.add('active');
+                if (i.querySelector('span').innerText === val || i.dataset.val === val) {
+                    i.classList.add('active');
+                }
             });
+            
+            // Mostrar/esconder o campo de "Nova Categoria" se for Outros
+            if(val === 'Outros') {
+                document.getElementById('customCatDiv').style.display = 'block';
+                document.getElementById('customCatName').setAttribute('required', 'true');
+            } else {
+                document.getElementById('customCatDiv').style.display = 'none';
+                document.getElementById('customCatName').removeAttribute('required');
+            }
         }
     </script>
 
