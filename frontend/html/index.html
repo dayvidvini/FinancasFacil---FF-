@@ -12,7 +12,9 @@
     <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
-    <div class="auth-container">
+
+    <!-- ================= LAYOUT PADRÃO ================= -->
+    <div id="layoutPadrao" class="auth-container" style="display:none;">
         <div class="brand">
             <div class="brand-icon">
                 <i class="fa-solid fa-dollar-sign"></i>
@@ -88,9 +90,104 @@
             </form>
         </div>
     </div>
+
+    <!-- ================= LAYOUT SPLIT (Orçamento Familiar) ================= -->
+    <div id="layoutSplit" class="split-login-container" style="display:none;">
+        <!-- Lado Esquerdo: Banner verde -->
+        <div class="split-login-left">
+            <div class="split-bg-shape split-bg-shape-1"></div>
+            <div class="split-bg-shape split-bg-shape-2"></div>
+            <div class="split-left-content">
+                <p class="split-subtitle">GESTÃO FINANCEIRA</p>
+                <h1 class="split-title">Controle<br><em>financeiro</em><br>familiar</h1>
+                <p class="split-desc">Acompanhamento de receitas, despesas e<br>patrimônio em tempo real.</p>
+            </div>
+        </div>
+
+        <!-- Lado Direito: Formulário -->
+        <div class="split-login-right">
+            <div class="split-form-wrapper">
+                <p class="split-access-label">ACESSO RESTRITO</p>
+                <h2 class="split-form-title">Entrar na conta</h2>
+                <p class="split-form-sub">Preencha seus dados para continuar</p>
+
+                <form id="splitLoginForm" onsubmit="handleSplitLogin(event)">
+                    <div class="split-input-group">
+                        <label class="split-label">E-MAIL DE ACESSO</label>
+                        <input type="email" id="splitLoginName" class="split-input" placeholder="seu@email.com" required>
+                    </div>
+
+                    <div class="split-input-group">
+                        <label class="split-label">SENHA DE ACESSO</label>
+                        <div class="split-password-wrap">
+                            <input type="password" id="splitLoginPassword" class="split-input" placeholder="Digite sua senha" required>
+                            <button type="button" class="split-eye-btn" onclick="toggleSplitPassword()">
+                                <i class="fa-solid fa-ellipsis" id="splitEyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="split-btn-login">Acessar painel</button>
+                </form>
+
+                <p class="split-footer-text">Sistema protegido com acesso autenticado</p>
+
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <a href="#" onclick="showSplitRegister()" style="font-size: 0.8rem; color: var(--text-muted); text-decoration: underline;">Não tem conta? Cadastre-se</a>
+                </div>
+            </div>
+
+            <!-- Register Form (hidden by default) -->
+            <div id="splitRegisterWrapper" class="split-form-wrapper" style="display:none;">
+                <p class="split-access-label">NOVO CADASTRO</p>
+                <h2 class="split-form-title">Criar conta</h2>
+                <p class="split-form-sub">Preencha os dados para começar</p>
+
+                <form id="splitRegisterForm" onsubmit="handleSplitRegister(event)">
+                    <div class="split-input-group">
+                        <label class="split-label">NOME COMPLETO</label>
+                        <input type="text" id="splitRegName" class="split-input" placeholder="Seu nome" required>
+                    </div>
+                    <div class="split-input-group">
+                        <label class="split-label">E-MAIL</label>
+                        <input type="email" id="splitRegEmail" class="split-input" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="split-input-group">
+                        <label class="split-label">TELEFONE</label>
+                        <input type="tel" id="splitRegPhone" class="split-input" placeholder="(11) 99999-9999" required>
+                    </div>
+                    <div class="split-input-group">
+                        <label class="split-label">SENHA</label>
+                        <input type="password" id="splitRegPassword" class="split-input" placeholder="••••••••" required>
+                    </div>
+                    <div class="split-input-group">
+                        <label class="split-label">CONFIRMAR SENHA</label>
+                        <input type="password" id="splitRegConfPassword" class="split-input" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="split-btn-login">Criar conta</button>
+                </form>
+
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="#" onclick="showSplitLogin()" style="font-size: 0.8rem; color: var(--text-muted); text-decoration: underline;">Já tem conta? Faça login</a>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <script src="/js/app.js"></script>
     <script>
+        // Detectar layout e exibir o correto
+        (function() {
+            const layout = localStorage.getItem('ff_login_layout') || 'padrao';
+            if (layout === 'split') {
+                document.getElementById('layoutSplit').style.display = 'flex';
+                document.getElementById('layoutPadrao').style.display = 'none';
+            } else {
+                document.getElementById('layoutPadrao').style.display = 'flex';
+                document.getElementById('layoutSplit').style.display = 'none';
+            }
+        })();
+
         function toggleAuth(type) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.form-toggle').forEach(f => f.classList.remove('active'));
@@ -101,6 +198,90 @@
             } else {
                 document.querySelectorAll('.auth-tab')[1].classList.add('active');
                 document.getElementById('registerForm').classList.add('active');
+            }
+        }
+
+        // Split layout: toggle entre login/register
+        function showSplitRegister() {
+            document.getElementById('splitRegisterWrapper').style.display = 'block';
+            document.getElementById('splitRegisterWrapper').previousElementSibling.style.display = 'none';
+            // Esconde o form wrapper de login (primeiro .split-form-wrapper)
+            document.querySelector('#layoutSplit .split-login-right .split-form-wrapper').style.display = 'none';
+        }
+        function showSplitLogin() {
+            document.querySelectorAll('#layoutSplit .split-login-right .split-form-wrapper')[0].style.display = 'block';
+            document.getElementById('splitRegisterWrapper').style.display = 'none';
+        }
+
+        // Split layout: toggle password visibility
+        function toggleSplitPassword() {
+            const inp = document.getElementById('splitLoginPassword');
+            const icon = document.getElementById('splitEyeIcon');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                icon.className = 'fa-solid fa-eye';
+            } else {
+                inp.type = 'password';
+                icon.className = 'fa-solid fa-ellipsis';
+            }
+        }
+
+        // Split layout: login handler (usa email)
+        async function handleSplitLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('splitLoginName').value;
+            const password = document.getElementById('splitLoginPassword').value;
+            
+            try {
+                const res = await apiFetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    body: JSON.stringify({email, password})
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    localStorage.setItem('ff_user_id', data.user_id);
+                    localStorage.setItem('ff_token', data.token);
+                    localStorage.setItem('ff_user_name', data.name);
+                    if(data.email) localStorage.setItem('ff_user_email', data.email);
+                    if(data.theme) {
+                        localStorage.setItem('ff_user_theme', data.theme);
+                        applyGlobalTheme();
+                    }
+                    window.location.href = '/dashboard';
+                } else {
+                    alert(data.error || 'Erro ao acessar');
+                }
+            } catch(err) {
+                alert("Erro ao conectar ao servidor");
+            }
+        }
+
+        // Split layout: register handler
+        async function handleSplitRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('splitRegName').value;
+            const email = document.getElementById('splitRegEmail').value;
+            const phone = document.getElementById('splitRegPhone').value;
+            const password = document.getElementById('splitRegPassword').value;
+            const confPassword = document.getElementById('splitRegConfPassword').value;
+            
+            if(password !== confPassword) {
+                alert("As senhas não coincidem!");
+                return;
+            }
+
+            try {
+                const res = await apiFetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    body: JSON.stringify({ name, email, phone, password })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    alert("Conta criada com sucesso! Faça login.");
+                    showSplitLogin();
+                } else alert(data.error);
+            } catch(err) {
+                alert("Erro ao cadastrar");
             }
         }
     </script>

@@ -170,6 +170,44 @@
                         </div>
                     </div>
 
+                    <!-- Bloco 6: LAYOUT DA TELA DE LOGIN -->
+                    <div class="form-card"
+                        style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
+                        <div class="form-header">
+                            <h2><i class="fa-solid fa-table-columns" style="color:#10b981"></i> Layout de Login</h2>
+                            <p>Escolha o estilo da tela de entrada do sistema</p>
+                        </div>
+
+                        <div class="layout-selector" id="layoutConfBox">
+                            <div class="layout-box" id="layout-padrao" onclick="updateLoginLayout('padrao')">
+                                <div class="layout-preview layout-preview-padrao">
+                                    <div class="lp-center">
+                                        <div class="lp-icon"></div>
+                                        <div class="lp-line"></div>
+                                        <div class="lp-line short"></div>
+                                        <div class="lp-btn"></div>
+                                    </div>
+                                </div>
+                                <span>Padrão</span>
+                            </div>
+                            <div class="layout-box" id="layout-split" onclick="updateLoginLayout('split')">
+                                <div class="layout-preview layout-preview-split">
+                                    <div class="lp-left">
+                                        <div class="lp-circle"></div>
+                                        <div class="lp-text-line"></div>
+                                        <div class="lp-text-line short"></div>
+                                    </div>
+                                    <div class="lp-right">
+                                        <div class="lp-line"></div>
+                                        <div class="lp-line short"></div>
+                                        <div class="lp-btn"></div>
+                                    </div>
+                                </div>
+                                <span>Orçamento Familiar</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Bloco 5: GESTÃO DE DADOS (Exportar CSV e Excluir) -->
                     <div class="form-card"
                         style="box-shadow: none; border: 1px solid var(--border-color); padding: 1.5rem;">
@@ -229,6 +267,13 @@
         checkAuth();
         document.getElementById('confName').value = localStorage.getItem('ff_user_name') || '';
         document.getElementById('confEmail').value = localStorage.getItem('ff_user_email') || '';
+
+        // Inicializa seletor de layout
+        (function() {
+            const layout = localStorage.getItem('ff_login_layout') || 'padrao';
+            const el = document.getElementById('layout-' + layout);
+            if (el) el.classList.add('active');
+        })();
     </script>
 
     <script>

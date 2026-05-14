@@ -343,7 +343,16 @@ def login():
     data = request.json
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE email=?", (data['email'],))
+    
+    # Suporta login por email OU por nome (layout split)
+    if data.get('email'):
+        c.execute("SELECT * FROM users WHERE email=?", (data['email'],))
+    elif data.get('name'):
+        c.execute("SELECT * FROM users WHERE name=?", (data['name'],))
+    else:
+        conn.close()
+        return jsonify({"error": "Informe email ou nome para login"}), 400
+    
     user = c.fetchone()
     conn.close()
 

@@ -665,6 +665,18 @@ window.updateThemeConfig = async function(themeString) {
     } catch(er) {}
 }
 
+// -> Função: Trocar layout da tela de login (padrão / split)
+window.updateLoginLayout = function(layoutName) {
+    // UI Feedback imediato
+    const boxes = document.querySelectorAll('#layoutConfBox .layout-box');
+    boxes.forEach(b => b.classList.remove('active'));
+    const el = document.getElementById('layout-' + layoutName);
+    if (el) el.classList.add('active');
+
+    // Salvar preferência no localStorage
+    localStorage.setItem('ff_login_layout', layoutName);
+}
+
 window.exportFinancialData = function() {
     const user_id = getCurrentUserId();
     // Navegador resolve requisição GET e abre tela de donwload sozinho
